@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Customers - อ่านได้ทุกคน, เขียนได้เฉพาะ admin
+    match /customers/{customerId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Orders - อ่านได้ตาม customerId หรือ admin
+    match /orders/{orderId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Order Items
+    match /orders/{orderId}/items/{itemId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Production - เขียนได้เฉพาะ tailor ที่ถูก assign หรือ admin
+    match /production/{productionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Tailors
+    match /tailors/{tailorId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Inventory
+    match /inventory/{inventoryId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

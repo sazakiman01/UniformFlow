@@ -1,0 +1,47 @@
+{
+  "name": "your-project-name",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your project description",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build && pnpm --filter functions build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "emulators": "firebase emulators:start",
+    "seed": "pnpm --filter functions seed",
+    "seed:reset": "pnpm --filter functions seed -- --reset",
+    "deploy:staging": "firebase deploy --only hosting,functions --project your-project-id",
+    "deploy:production": "firebase deploy --only hosting,functions --project your-project-id",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "prettier": "^3.2.4",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "firebase-tools": "^13.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
