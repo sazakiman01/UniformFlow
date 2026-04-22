@@ -44,7 +44,7 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <Package className="w-6 h-6 text-blue-600" />
-            <h1 className="font-bold text-gray-900">ระบบคุณแฟน</h1>
+            <h1 className="font-bold text-gray-900">UniformFlow</h1>
           </div>
           <button
             onClick={handleLogout}

@@ -9,7 +9,7 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "ระบบคุณแฟน - UniformFlow",
+  title: "UniformFlow",
   description: "ระบบจัดการคำสั่งงานผลิตชุดยูนิฟอร์ม",
 };
 
