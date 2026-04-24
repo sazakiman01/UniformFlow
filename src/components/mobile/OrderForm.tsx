@@ -356,12 +356,14 @@ export default function OrderForm({
                     type="number"
                     min={0}
                     inputMode="numeric"
-                    value={item.quantity}
+                    value={item.quantity === 0 ? "" : item.quantity}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) =>
                       updateItem(index, {
                         quantity: Number(e.target.value) || 0,
                       })
                     }
+                    placeholder="0"
                     className={inputCls}
                   />
                 </div>
@@ -373,12 +375,14 @@ export default function OrderForm({
                     type="number"
                     min={0}
                     inputMode="decimal"
-                    value={item.unitPrice}
+                    value={item.unitPrice === 0 ? "" : item.unitPrice}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) =>
                       updateItem(index, {
                         unitPrice: Number(e.target.value) || 0,
                       })
                     }
+                    placeholder="0"
                     className={inputCls}
                   />
                 </div>
@@ -419,8 +423,10 @@ export default function OrderForm({
             required
             min={0}
             inputMode="decimal"
-            value={paidAmount}
+            value={paidAmount === 0 ? "" : paidAmount}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setPaidAmount(Number(e.target.value) || 0)}
+            placeholder="0"
             className={inputCls}
           />
         </div>
