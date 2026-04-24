@@ -18,10 +18,10 @@ export default function Home() {
             เข้าสู่ระบบ (Mobile)
           </Link>
           <Link
-            href="/desktop/dashboard"
+            href="/admin/users"
             className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
-            Dashboard (Desktop)
+            Admin Dashboard
           </Link>
         </div>
       </div>

@@ -88,6 +88,7 @@ export default function OrderForm({
   const [paidAmount, setPaidAmount] = useState<number>(
     initial?.paidAmount ?? 0
   );
+  const [paidPercentage, setPaidPercentage] = useState<number>(0);
 
   const [receipt, setReceipt] = useState<ReceiptInfo>(
     initial?.receiptInfo ?? { name: "", address: "", phone: "" }
@@ -169,6 +170,20 @@ export default function OrderForm({
 
   const totalAmount = items.reduce((s, it) => s + (it.totalPrice || 0), 0);
   const remainingAmount = totalAmount - (paidAmount || 0);
+
+  // Sync percentage when paidAmount changes
+  useEffect(() => {
+    if (totalAmount > 0) {
+      setPaidPercentage((paidAmount / totalAmount) * 100);
+    }
+  }, [paidAmount, totalAmount]);
+
+  // Sync paidAmount when percentage changes
+  const handlePercentageChange = (value: number) => {
+    setPaidPercentage(value);
+    const calculatedAmount = (value / 100) * totalAmount;
+    setPaidAmount(calculatedAmount);
+  };
 
   const remainingStyle =
     remainingAmount === 0
@@ -416,19 +431,43 @@ export default function OrderForm({
             {formatCurrency(totalAmount)}
           </span>
         </div>
-        <div>
-          <label className={labelCls}>ยอดที่ลูกค้าชำระ *</label>
-          <input
-            type="number"
-            required
-            min={0}
-            inputMode="decimal"
-            value={paidAmount === 0 ? "" : paidAmount}
-            onFocus={(e) => e.target.select()}
-            onChange={(e) => setPaidAmount(Number(e.target.value) || 0)}
-            placeholder="0"
-            className={inputCls}
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>ยอดที่ลูกค้าชำระ *</label>
+            <input
+              type="number"
+              required
+              min={0}
+              inputMode="decimal"
+              value={paidAmount === 0 ? "" : paidAmount}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setPaidAmount(Number(e.target.value) || 0)}
+              placeholder="0"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>เปอร์เซ็นชำระ</label>
+            <div className="relative">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                inputMode="decimal"
+                value={paidPercentage === 0 ? "" : paidPercentage}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) =>
+                  handlePercentageChange(Number(e.target.value) || 0)
+                }
+                placeholder="0"
+                className={`${inputCls} pr-8`}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                %
+              </span>
+            </div>
+          </div>
         </div>
         <div
           className={`rounded-lg p-3 border flex items-center justify-between ${remainingStyle}`}
