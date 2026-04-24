@@ -67,10 +67,19 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">รายการออเดอร์</h2>
-        <span className="text-sm text-gray-500">{orders.length} รายการ</span>
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">รายการออเดอร์</h2>
+          <p className="text-sm text-gray-500">{orders.length} รายการ</p>
+        </div>
+        <Link
+          href="/mobile/orders/new"
+          className="inline-flex items-center gap-1 px-3 py-2 min-h-[44px] bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4" />
+          สร้างใหม่
+        </Link>
       </div>
 
       {orders.length === 0 ? (
@@ -89,6 +98,10 @@ export default function OrdersPage() {
         <div className="space-y-3">
           {orders.map((order) => {
             const status = statusConfig[order.status] ?? statusConfig.pending;
+            const remaining =
+              order.remainingAmount ??
+              (order.totalAmount - (order.paidAmount ?? 0));
+            const paidFully = remaining <= 0 && order.totalAmount > 0;
             return (
               <Link
                 key={order.id}
@@ -107,7 +120,7 @@ export default function OrdersPage() {
                   <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <span
                     className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}
                   >
@@ -117,6 +130,23 @@ export default function OrdersPage() {
                     {formatCurrency(order.totalAmount)}
                   </span>
                 </div>
+
+                {order.totalAmount > 0 && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500">
+                      ชำระแล้ว {formatCurrency(order.paidAmount ?? 0)}
+                    </span>
+                    {paidFully ? (
+                      <span className="text-green-700 font-medium">
+                        ชำระครบ
+                      </span>
+                    ) : (
+                      <span className="text-orange-700 font-medium">
+                        ค้าง {formatCurrency(remaining)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </Link>
             );
           })}

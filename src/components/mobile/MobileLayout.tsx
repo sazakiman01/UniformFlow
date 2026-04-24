@@ -4,12 +4,12 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Package, Plus, LogOut, List } from "lucide-react";
+import { Package, Plus, LogOut, List, Users, AlertCircle } from "lucide-react";
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, profile, profileLoading, isAdmin, isDisabled, signOut } = useAuth();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -17,7 +17,7 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || (user && profileLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -32,9 +32,58 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
     router.push("/login");
   };
 
+  // No profile = not set up yet (admin needs to seed or accept invite)
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 max-w-md text-center">
+          <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            บัญชียังไม่ได้รับการตั้งค่า
+          </h2>
+          <p className="text-gray-600 text-sm mb-4">
+            กรุณาติดต่อผู้ดูแลระบบเพื่อเปิดใช้งานบัญชีของคุณ
+          </p>
+          <button
+            onClick={handleLogout}
+            className="w-full min-h-[48px] py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
+          >
+            ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Disabled user
+  if (isDisabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 max-w-md text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            บัญชีถูกปิดการใช้งาน
+          </h2>
+          <p className="text-gray-600 text-sm mb-4">
+            กรุณาติดต่อผู้ดูแลระบบ
+          </p>
+          <button
+            onClick={handleLogout}
+            className="w-full min-h-[48px] py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
+          >
+            ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const navItems = [
     { href: "/mobile/orders", label: "ออเดอร์", icon: List },
     { href: "/mobile/orders/new", label: "สร้างใหม่", icon: Plus },
+    ...(isAdmin
+      ? [{ href: "/admin/users", label: "Admin", icon: Users }]
+      : []),
   ];
 
   return (

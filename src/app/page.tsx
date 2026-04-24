@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -9,18 +11,18 @@ export default function Home() {
           ระบบจัดการคำสั่งงานผลิตชุดยูนิฟอร์ม
         </p>
         <div className="space-x-4">
-          <a
+          <Link
             href="/mobile/orders"
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             เข้าสู่ระบบ (Mobile)
-          </a>
-          <a
+          </Link>
+          <Link
             href="/desktop/dashboard"
             className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             Dashboard (Desktop)
-          </a>
+          </Link>
         </div>
       </div>
     </main>

@@ -1,3 +1,34 @@
+// User (Firestore mirror of Firebase Auth + metadata)
+export type UserRole = 'admin' | 'user';
+
+export interface UserProfile {
+  id: string;              // Firebase Auth uid
+  email: string;
+  displayName?: string;
+  role: UserRole;
+  disabled: boolean;
+  lineUserId?: string;     // Phase 2
+  invitedBy?: string;      // uid of admin who invited
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Invite
+export type InviteStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
+
+export interface Invite {
+  id: string;
+  email: string;
+  role: UserRole;
+  token: string;           // 32-char random
+  status: InviteStatus;
+  expiresAt: Date;
+  createdBy: string;       // admin uid
+  createdAt: Date;
+  acceptedAt?: Date;
+  acceptedBy?: string;     // user uid
+}
+
 // Customer
 export interface Customer {
   id: string;
@@ -24,14 +55,17 @@ export interface Order {
   customerId: string;
   orderNumber: string;
   transferDate?: Date;
-  deliveryDateRange: {
+  deliveryDateRange?: {
     start: Date;
     end: Date;
   };
   channel: 'L' | 'F' | 'OTHER';
+  items: OrderItem[];
   totalAmount: number;
   paidAmount: number;
-  discountAmount: number;
+  remainingAmount: number;
+  discountAmount?: number;
+  receiptInfo?: ReceiptInfo;
   status: OrderStatus;
   paymentVerified: boolean;
   emailCheckLink?: string;
@@ -42,22 +76,26 @@ export interface Order {
 
 export type OrderStatus = 'pending' | 'confirmed' | 'production' | 'ready' | 'shipped' | 'completed';
 
-// Order Item
+// Order Item (embedded in Order.items array)
 export interface OrderItem {
-  id: string;
-  orderId: string;
   productName: string;
-  description: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  specifications: {
+  description?: string;
+  specifications?: {
     size?: string;
     color?: string;
     customNotes?: string;
     logoImage?: string;
   };
-  createdAt: Date;
+}
+
+// Receipt Info
+export interface ReceiptInfo {
+  name?: string;
+  address?: string;
+  phone?: string;
 }
 
 // Production

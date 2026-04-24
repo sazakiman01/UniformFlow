@@ -6,8 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,19 +18,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        await signUp(email, password);
-      } else {
-        await signIn(email, password);
-      }
+      await signIn(email, password);
       router.push("/mobile/orders");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
       setError(
-        err.code === "auth/invalid-credential"
+        code === "auth/invalid-credential"
           ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
-          : err.code === "auth/email-already-in-use"
+          : code === "auth/email-already-in-use"
           ? "อีเมลนี้ถูกใช้งานแล้ว"
-          : err.code === "auth/weak-password"
+          : code === "auth/weak-password"
           ? "รหัสผ่านต้องมีอย่างน้อย 6 ตัว"
           : "เกิดข้อผิดพลาด กรุณาลองใหม่"
       );
@@ -47,9 +43,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             UniformFlow
           </h1>
-          <p className="text-gray-600">
-            {isSignUp ? "สมัครสมาชิกใหม่" : "เข้าสู่ระบบ"}
-          </p>
+          <p className="text-gray-600">เข้าสู่ระบบ</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,21 +87,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "กำลังดำเนินการ..." : isSignUp ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}
+            {loading ? "กำลังดำเนินการ..." : "เข้าสู่ระบบ"}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError("");
-            }}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            {isSignUp ? "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" : "ยังไม่มีบัญชี? สมัครสมาชิก"}
-          </button>
+          <p className="text-xs text-gray-500">
+            บัญชีใหม่ต้องได้รับคำเชิญจากผู้ดูแลระบบ
+          </p>
         </div>
       </div>
     </main>

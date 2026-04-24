@@ -1,22 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   doc,
   getDoc,
   updateDoc,
-  collection,
-  query,
-  where,
-  getDocs,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Order, OrderItem, Customer, OrderStatus } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ArrowLeft, Phone, MapPin, Package } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Package, Pencil, Receipt } from "lucide-react";
 
 const statusOptions: { value: OrderStatus; label: string; color: string }[] = [
   { value: "pending", label: "รอยืนยัน", color: "bg-gray-100 text-gray-700 border-gray-300" },
@@ -29,11 +25,9 @@ const statusOptions: { value: OrderStatus; label: string; color: string }[] = [
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [items, setItems] = useState<OrderItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -42,7 +36,6 @@ export default function OrderDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Order
         const orderSnap = await getDoc(doc(db, "orders", id));
         if (!orderSnap.exists()) {
           setError("ไม่พบออเดอร์");
@@ -53,28 +46,24 @@ export default function OrderDetailPage() {
         const orderData: Order = {
           id: orderSnap.id,
           ...d,
+          items: (d.items as OrderItem[]) ?? [],
+          transferDate: (d.transferDate as Timestamp)?.toDate?.() ?? undefined,
           createdAt: (d.createdAt as Timestamp)?.toDate?.() ?? new Date(),
           updatedAt: (d.updatedAt as Timestamp)?.toDate?.() ?? new Date(),
         } as Order;
         setOrder(orderData);
 
-        // Customer
         if (orderData.customerId) {
-          const customerSnap = await getDoc(doc(db, "customers", orderData.customerId));
+          const customerSnap = await getDoc(
+            doc(db, "customers", orderData.customerId)
+          );
           if (customerSnap.exists()) {
-            setCustomer({ id: customerSnap.id, ...customerSnap.data() } as Customer);
+            setCustomer({
+              id: customerSnap.id,
+              ...customerSnap.data(),
+            } as Customer);
           }
         }
-
-        // Order Items
-        const itemsQuery = query(
-          collection(db, "orderItems"),
-          where("orderId", "==", id)
-        );
-        const itemsSnap = await getDocs(itemsQuery);
-        setItems(
-          itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as OrderItem))
-        );
       } catch (err) {
         console.error(err);
         setError("ไม่สามารถโหลดข้อมูลได้");
@@ -82,7 +71,6 @@ export default function OrderDetailPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [id]);
 
@@ -124,24 +112,51 @@ export default function OrderDetailPage() {
     );
   }
 
+  const remaining = order.remainingAmount ?? (order.totalAmount - order.paidAmount);
+  const remainingStyle =
+    remaining === 0
+      ? "bg-green-50 text-green-700"
+      : remaining > 0
+      ? "bg-orange-50 text-orange-700"
+      : "bg-red-50 text-red-700";
+  const remainingLabel =
+    remaining === 0
+      ? "ชำระครบ"
+      : remaining > 0
+      ? `ค้างชำระ ${formatCurrency(remaining)}`
+      : `ชำระเกิน ${formatCurrency(Math.abs(remaining))}`;
+
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
-        <Link href="/mobile/orders" className="p-2 -ml-2 text-gray-600">
+        <Link
+          href="/mobile/orders"
+          className="p-2 -ml-2 text-gray-600"
+          aria-label="กลับ"
+        >
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-bold text-gray-900 truncate">
             {order.orderNumber}
           </h2>
-          <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+          <p className="text-sm text-gray-500">
+            สร้างเมื่อ {formatDate(order.createdAt)}
+          </p>
         </div>
+        <Link
+          href={`/mobile/orders/${order.id}/edit`}
+          className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium"
+        >
+          <Pencil className="w-4 h-4" />
+          แก้ไข
+        </Link>
       </div>
 
       {/* Status */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <h3 className="font-semibold text-gray-900 mb-3">สถานะออเดอร์</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {statusOptions.map((opt) => {
             const isActive = order.status === opt.value;
             return (
@@ -149,7 +164,7 @@ export default function OrderDetailPage() {
                 key={opt.value}
                 onClick={() => handleStatusChange(opt.value)}
                 disabled={updating || isActive}
-                className={`px-3 py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                className={`px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium border-2 transition-all ${
                   isActive
                     ? opt.color + " ring-2 ring-offset-1 ring-blue-500"
                     : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
@@ -159,6 +174,29 @@ export default function OrderDetailPage() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* Payment Info */}
+      <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
+        <h3 className="font-semibold text-gray-900 mb-2">ข้อมูลการโอนเงิน</h3>
+        {order.transferDate && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">วันที่โอนเงิน</span>
+            <span className="font-medium text-gray-900">
+              {formatDate(order.transferDate)}
+            </span>
+          </div>
+        )}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-600">ช่องทาง</span>
+          <span className="font-medium text-gray-900">
+            {order.channel === "L"
+              ? "LINE"
+              : order.channel === "F"
+              ? "Facebook"
+              : "อื่นๆ"}
+          </span>
         </div>
       </div>
 
@@ -186,34 +224,35 @@ export default function OrderDetailPage() {
       {/* Items */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <h3 className="font-semibold text-gray-900 mb-3">รายการสินค้า</h3>
-        {items.length === 0 ? (
+        {!order.items || order.items.length === 0 ? (
           <p className="text-gray-500 text-sm">ไม่มีรายการ</p>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
-              <div key={item.id} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
+            {order.items.map((item, idx) => (
+              <div
+                key={idx}
+                className="border-b border-gray-100 last:border-0 pb-3 last:pb-0"
+              >
                 <div className="flex items-start gap-3">
                   {item.specifications?.logoImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.specifications.logoImage}
                       alt={item.productName}
-                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      className="w-14 h-14 object-cover rounded-lg flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Package className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900">{item.productName}</p>
-                    {item.specifications?.customNotes && (
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {item.specifications.customNotes}
-                      </p>
-                    )}
+                    <p className="font-medium text-gray-900">
+                      {item.productName}
+                    </p>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-sm text-gray-600">
-                        {item.quantity} x {formatCurrency(item.unitPrice)}
+                        {item.quantity} × {formatCurrency(item.unitPrice)}
                       </span>
                       <span className="font-semibold text-gray-900">
                         {formatCurrency(item.totalPrice)}
@@ -227,15 +266,56 @@ export default function OrderDetailPage() {
         )}
       </div>
 
-      {/* Total */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      {/* Summary */}
+      <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
+        <h3 className="font-semibold text-gray-900 mb-2">สรุปยอด</h3>
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-gray-900">ยอดรวม</span>
-          <span className="text-2xl font-bold text-blue-600">
+          <span className="text-gray-700">รวมยอดเงิน</span>
+          <span className="font-semibold text-gray-900">
             {formatCurrency(order.totalAmount)}
           </span>
         </div>
+        <div className="flex items-center justify-between">
+          <span className="text-gray-700">ยอดที่ลูกค้าชำระ</span>
+          <span className="font-semibold text-gray-900">
+            {formatCurrency(order.paidAmount)}
+          </span>
+        </div>
+        <div
+          className={`rounded-lg px-3 py-2 flex items-center justify-between ${remainingStyle}`}
+        >
+          <span className="text-sm font-medium">ยอดคงเหลือ</span>
+          <span className="font-bold">{remainingLabel}</span>
+        </div>
       </div>
+
+      {/* Receipt Info */}
+      {order.receiptInfo &&
+        (order.receiptInfo.name ||
+          order.receiptInfo.address ||
+          order.receiptInfo.phone) && (
+          <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
+            <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <Receipt className="w-4 h-4" />
+              ข้อมูลใบเสร็จ
+            </h3>
+            {order.receiptInfo.name && (
+              <p className="text-gray-900 font-medium">
+                {order.receiptInfo.name}
+              </p>
+            )}
+            {order.receiptInfo.address && (
+              <p className="text-gray-700 text-sm">
+                {order.receiptInfo.address}
+              </p>
+            )}
+            {order.receiptInfo.phone && (
+              <p className="text-gray-700 text-sm">
+                โทร. {order.receiptInfo.phone}
+              </p>
+            )}
+          </div>
+        )}
     </div>
   );
 }
