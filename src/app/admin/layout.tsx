@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, LogOut, ArrowLeft, Building2, FileText, Receipt, Wallet, BarChart3 } from "lucide-react";
+import { Loader2, Users, LogOut, ArrowLeft, Building2, FileText, Receipt, Wallet, BarChart3, Truck, FileMinus } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -80,6 +80,8 @@ function AdminNav() {
     { href: "/admin/company", label: "ข้อมูลบริษัท", icon: Building2 },
     { href: "/admin/quotations", label: "ใบเสนอราคา", icon: FileText },
     { href: "/admin/invoices", label: "ใบกำกับภาษี", icon: Receipt },
+    { href: "/admin/credit-notes", label: "ใบลดหนี้", icon: FileMinus },
+    { href: "/admin/delivery-notes", label: "ใบส่งของ", icon: Truck },
     { href: "/admin/expenses", label: "ค่าใช้จ่าย", icon: Wallet },
     { href: "/admin/reports", label: "รายงาน", icon: BarChart3 },
   ];

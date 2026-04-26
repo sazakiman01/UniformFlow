@@ -603,30 +603,45 @@ export interface WHTCertificate {
 }
 
 // ── Tax Reports (computed views — not stored, but cached optionally) ────────
+export interface VATInvoiceLine {
+  invoiceId: string;
+  number: string;
+  issueDate: Date;
+  customerName: string;
+  customerTaxId?: string;
+  netAmount: number;
+  vatAmount: number;
+}
+
+export interface VATExpenseLine {
+  expenseId: string;
+  number: string;
+  paidAt: Date;
+  supplierName: string;
+  supplierTaxId?: string;
+  supplierTaxInvoiceNumber?: string;
+  amount: number;
+  vatAmount: number;
+}
+
 export interface VATReport {
   // ภพ.30
   period: { year: number; month: number };
-  // Sales (output VAT)
-  salesTotal: number;
-  salesVat: number;
-  salesEntries: VATEntry[];
-  // Purchases (input VAT)
-  purchasesTotal: number;
-  purchasesVat: number;
-  purchasesEntries: VATEntry[];
-  // Summary
-  vatPayable: number;             // sales VAT - purchase VAT
+  output: {
+    base: number;
+    vat: number;
+    invoiceCount: number;
+    invoices: VATInvoiceLine[];
+  };
+  input: {
+    base: number;
+    vat: number;
+    expenseCount: number;
+    expenses: VATExpenseLine[];
+  };
+  vatDue: number;                 // output - input (positive = ชำระ, negative = ขอคืน)
+  isRefund: boolean;
   generatedAt: Date;
-}
-
-export interface VATEntry {
-  date: Date;
-  documentNumber: string;
-  partyName: string;
-  partyTaxId?: string;
-  amount: number;
-  vatAmount: number;
-  documentType: 'invoice' | 'expense' | 'credit_note';
 }
 
 export interface WHTReport {
@@ -635,17 +650,21 @@ export interface WHTReport {
   period: { year: number; month: number };
   entries: WHTCertificate[];
   totalTaxWithheld: number;
+  totalIncome: number;
   generatedAt: Date;
 }
 
 // ── Profit & Loss / Cash Flow (computed) ────────────────────────────────────
 export interface PLReport {
   period: { from: Date; to: Date };
-  revenue: { total: number; byCategory: Record<string, number> };
-  cogs: { total: number };
+  revenue: number;
+  cogs: number;
   grossProfit: number;
-  expenses: { total: number; byCategory: Record<ExpenseCategory, number> };
+  grossMarginPct: number;
+  operatingExpenses: number;
   netProfit: number;
+  netMarginPct: number;
+  expensesByCategory: Record<string, number>;
   generatedAt: Date;
 }
 
@@ -658,23 +677,23 @@ export interface CashFlowReport {
 }
 
 // ── AR Aging ────────────────────────────────────────────────────────────────
-export interface ARAgingBucket {
-  current: number;       // not yet due
-  d1to30: number;
-  d31to60: number;
-  d61to90: number;
-  over90: number;
-  total: number;
+export type ARAgingBucket = "current" | "1-30" | "31-60" | "61-90" | "90+";
+
+export interface ARAgingItem {
+  invoiceId: string;
+  invoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  issueDate: Date;
+  dueDate: Date;
+  overdueDays: number;
+  amountDue: number;
+  bucket: ARAgingBucket;
 }
 
 export interface ARAgingReport {
-  asOfDate: Date;
-  byCustomer: Array<{
-    customerId: string;
-    customerName: string;
-    invoices: Array<{ invoiceId: string; number: string; dueDate: Date; amountDue: number; daysOverdue: number }>;
-    bucket: ARAgingBucket;
-  }>;
-  totals: ARAgingBucket;
-  generatedAt: Date;
+  asOf: Date;
+  items: ARAgingItem[];
+  buckets: Record<ARAgingBucket, number>;
+  totalDue: number;
 }
