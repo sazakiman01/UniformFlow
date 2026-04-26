@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, LogOut, ArrowLeft } from "lucide-react";
+import { Loader2, Users, LogOut, ArrowLeft, Building2, FileText, Receipt, Wallet, BarChart3 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -66,7 +67,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </header>
+      <AdminNav />
       <main className="max-w-4xl mx-auto">{children}</main>
     </div>
+  );
+}
+
+function AdminNav() {
+  const pathname = usePathname();
+  const items = [
+    { href: "/admin/users", label: "ผู้ใช้", icon: Users },
+    { href: "/admin/company", label: "ข้อมูลบริษัท", icon: Building2 },
+    { href: "/admin/quotations", label: "ใบเสนอราคา", icon: FileText },
+    { href: "/admin/invoices", label: "ใบกำกับภาษี", icon: Receipt },
+    { href: "/admin/expenses", label: "ค่าใช้จ่าย", icon: Wallet },
+    { href: "/admin/reports", label: "รายงาน", icon: BarChart3 },
+  ];
+  return (
+    <nav className="bg-white border-b border-gray-200 overflow-x-auto">
+      <div className="max-w-4xl mx-auto px-2 flex items-center gap-1">
+        {items.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname?.startsWith(href + "/");
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={
+                "inline-flex items-center gap-1.5 px-3 py-2.5 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors " +
+                (active
+                  ? "border-blue-600 text-blue-700 font-medium"
+                  : "border-transparent text-gray-600 hover:text-gray-900")
+              }
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }

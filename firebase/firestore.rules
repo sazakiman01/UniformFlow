@@ -10,30 +10,32 @@ service cloud.firestore {
     function userExists() {
       return isAuth() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
-    function isAdmin() {
-      return userExists() && userDoc().data.role == "admin" && userDoc().data.disabled != true;
-    }
     function isActiveUser() {
       return userExists() && userDoc().data.disabled != true;
     }
+    function role() {
+      return userDoc().data.role;
+    }
+    function isOwner()     { return isActiveUser() && (role() == 'owner' || role() == 'admin'); }
+    function isAccountant(){ return isActiveUser() && (role() == 'accountant' || role() == 'owner' || role() == 'admin'); }
+    function isStaff()     { return isActiveUser() && role() != 'viewer'; }
+    function isViewer()    { return isActiveUser(); }
 
-    // Users collection
+    // Backward-compat alias
+    function isAdmin() { return isOwner(); }
+
+    // ── Users ────────────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if isAuth() && (request.auth.uid == uid || isAdmin());
-      // Self-create on invite accept (creating own profile doc)
+      allow read: if isAuth() && (request.auth.uid == uid || isOwner());
       allow create: if isAuth() && request.auth.uid == uid;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow update, delete: if isOwner();
     }
 
-    // Invites collection
+    // ── Invites ──────────────────────────────────────────────────────────
     match /invites/{inviteId} {
-      // Anyone can query invites by token (token itself is the secret)
       allow read: if true;
-      allow create: if isAdmin();
-      allow delete: if isAdmin();
-      // Update: admin full, or user accepting invite (limited)
-      allow update: if isAdmin()
+      allow create, delete: if isOwner();
+      allow update: if isOwner()
         || (isAuth()
             && resource.data.status == "pending"
             && request.resource.data.status == "accepted"
@@ -42,22 +44,88 @@ service cloud.firestore {
             && request.resource.data.token == resource.data.token);
     }
 
-    // Orders — require active user
-    match /orders/{orderId} {
-      allow read, write: if isActiveUser();
+    // ── Operations (orders, customers, production, inventory) ────────────
+    match /orders/{orderId}      { allow read: if isViewer(); allow write: if isStaff(); }
+    match /customers/{customerId}{ allow read: if isViewer(); allow write: if isStaff(); }
+    match /orderItems/{itemId}   { allow read: if isViewer(); allow write: if isStaff(); }
+    match /production/{prodId}   { allow read: if isViewer(); allow write: if isStaff(); }
+    match /tailors/{tailorId}    { allow read: if isViewer(); allow write: if isStaff(); }
+    match /inventory/{itemId}    { allow read: if isViewer(); allow write: if isStaff(); }
+    match /notifications/{notifId}{ allow read: if isViewer(); allow write: if isStaff(); }
+
+    // ── Company Profile (singleton) ──────────────────────────────────────
+    match /companyProfile/{docId} {
+      allow read: if isActiveUser();
+      allow write: if isOwner();
     }
 
-    // Customers — require active user
-    match /customers/{customerId} {
-      allow read, write: if isActiveUser();
+    // ── Document Counters ────────────────────────────────────────────────
+    // Only readable by accountants+; writes happen via transactions only.
+    match /documentCounters/{counterId} {
+      allow read: if isAccountant();
+      allow write: if isAccountant();
     }
 
-    // Legacy orderItems (kept for backward compat)
-    match /orderItems/{itemId} {
-      allow read, write: if isActiveUser();
+    // ── Quotations ───────────────────────────────────────────────────────
+    match /quotations/{quoteId} {
+      allow read: if isViewer();
+      allow create, update: if isAccountant();
+      allow delete: if isOwner();
     }
 
-    // Default deny
+    // ── Invoices (tax-bound — limited deletion) ──────────────────────────
+    match /invoices/{invoiceId} {
+      allow read: if isViewer();
+      allow create: if isAccountant();
+      // Update allowed for accountant; cancellation must be done in app logic
+      allow update: if isAccountant();
+      // No deletion — must use cancellation + credit note workflow
+      allow delete: if false;
+    }
+
+    match /invoicePayments/{paymentId} {
+      allow read: if isViewer();
+      allow create: if isAccountant();
+      allow update: if isAccountant();
+      allow delete: if isOwner();
+    }
+
+    // ── Credit Notes (immutable after issue) ─────────────────────────────
+    match /creditNotes/{cnId} {
+      allow read: if isViewer();
+      allow create: if isAccountant();
+      allow update: if isAccountant() && resource.data.status == 'draft';
+      allow delete: if false;
+    }
+
+    // ── Delivery Notes ───────────────────────────────────────────────────
+    match /deliveryNotes/{dnId} {
+      allow read: if isViewer();
+      allow write: if isStaff();
+    }
+
+    // ── Expenses ─────────────────────────────────────────────────────────
+    match /expenses/{expenseId} {
+      allow read: if isViewer();
+      allow create, update: if isAccountant();
+      allow delete: if isOwner();
+    }
+
+    // ── WHT Certificates (immutable after issue) ─────────────────────────
+    match /whtCertificates/{whtId} {
+      allow read: if isViewer();
+      allow create: if isAccountant();
+      allow update, delete: if false;
+    }
+
+    // ── Audit logs (write-only via app, read by accountants+) ────────────
+    match /auditLogs/{logId} {
+      allow read: if isAccountant();
+      allow create: if isActiveUser();
+      allow update, delete: if false;
+    }
+
+    // ── Default deny ─────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

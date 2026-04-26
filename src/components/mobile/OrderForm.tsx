@@ -7,11 +7,19 @@ import {
   where,
   getDocs,
   limit,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { OrderItem, ReceiptInfo } from "@/types";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Trash2, CheckCircle2, Copy } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, Copy, User, UserPlus } from "lucide-react";
+
+interface CustomerSuggestion {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+}
 
 export type Channel = "L" | "F" | "OTHER";
 
@@ -80,6 +88,9 @@ export default function OrderForm({
   const [dedupStatus, setDedupStatus] = useState<
     "idle" | "searching" | "matched" | "new"
   >("idle");
+  const [suggestions, setSuggestions] = useState<CustomerSuggestion[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const phoneWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const [items, setItems] = useState<OrderItem[]>(
     initial?.items && initial.items.length > 0 ? initial.items : [emptyItem()]
@@ -104,16 +115,22 @@ export default function OrderForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced customer dedup lookup
+  // Debounced customer autocomplete (prefix search)
   useEffect(() => {
     const phone = customerPhone.trim();
-    if (!phone || phone.length < 6) {
+    if (!phone || phone.length < 3) {
       setDedupStatus("idle");
+      setSuggestions([]);
       return;
     }
     // Skip lookup if editing and phone matches initial (already known customer)
     if (initial?.customerId && initial.customerPhone === phone) {
       setDedupStatus("matched");
+      setSuggestions([]);
+      return;
+    }
+    // If a customer is already selected and phone unchanged, keep status
+    if (customerId && customerPhone === phone && !showDropdown) {
       return;
     }
     setDedupStatus("searching");
@@ -121,34 +138,67 @@ export default function OrderForm({
       try {
         const q = query(
           collection(db, "customers"),
-          where("phone", "==", phone),
-          limit(1)
+          where("phone", ">=", phone),
+          where("phone", "<=", phone + "\uf8ff"),
+          orderBy("phone"),
+          limit(5)
         );
         const snap = await getDocs(q);
-        if (!snap.empty) {
-          const doc = snap.docs[0];
+        const results: CustomerSuggestion[] = snap.docs.map((doc) => {
           const data = doc.data() as {
             name?: string;
+            phone?: string;
             address?: { fullAddress?: string };
           };
-          setCustomerId(doc.id);
+          return {
+            id: doc.id,
+            name: data.name ?? "",
+            phone: data.phone ?? "",
+            address: data.address?.fullAddress ?? "",
+          };
+        });
+        setSuggestions(results);
+        // Exact match → mark as matched (but keep dropdown available)
+        const exact = results.find((r) => r.phone === phone);
+        if (exact) {
           setDedupStatus("matched");
-          // Auto-fill only if fields are empty (don't overwrite edits)
-          setCustomerName((prev) => prev || data.name || "");
-          setCustomerAddress(
-            (prev) => prev || data.address?.fullAddress || ""
-          );
         } else {
-          setCustomerId(undefined);
-          setDedupStatus("new");
+          setDedupStatus(results.length > 0 ? "idle" : "new");
         }
       } catch (e) {
-        console.error("Dedup lookup failed:", e);
+        console.error("Customer search failed:", e);
         setDedupStatus("idle");
+        setSuggestions([]);
       }
-    }, 500);
+    }, 300);
     return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerPhone, initial?.customerId, initial?.customerPhone]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        phoneWrapperRef.current &&
+        !phoneWrapperRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Select a suggestion → auto-fill
+  const selectSuggestion = (s: CustomerSuggestion) => {
+    setCustomerId(s.id);
+    setCustomerPhone(s.phone);
+    setCustomerName(s.name);
+    setCustomerAddress(s.address);
+    setDedupStatus("matched");
+    setShowDropdown(false);
+    setSuggestions([]);
+  };
 
   // Recalculate item totals
   const updateItem = (index: number, patch: Partial<OrderItem>) => {
@@ -242,7 +292,7 @@ export default function OrderForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-2xl mx-auto space-y-4 pb-28 md:pb-4"
+      className="max-w-2xl mx-auto space-y-4 md:pb-4"
     >
       {/* Section 1: ข้อมูลการสั่งซื้อ */}
       <div className={cardCls}>
@@ -293,17 +343,68 @@ export default function OrderForm({
           )}
         </div>
 
-        <div>
+        <div ref={phoneWrapperRef} className="relative">
           <label className={labelCls}>เบอร์โทร *</label>
           <input
             type="tel"
             required
             inputMode="tel"
             value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCustomerPhone(v);
+              // Clear selection when user edits phone
+              if (customerId && v !== customerPhone) {
+                setCustomerId(undefined);
+              }
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
             placeholder="08X-XXX-XXXX"
             className={inputCls}
+            autoComplete="off"
           />
+
+          {/* Autocomplete dropdown */}
+          {showDropdown &&
+            customerPhone.trim().length >= 3 &&
+            !customerId &&
+            (suggestions.length > 0 || dedupStatus === "new") && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-72 overflow-y-auto">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => selectSuggestion(s)}
+                    className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 flex items-start gap-2"
+                  >
+                    <User className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-gray-900 truncate">
+                        {s.name || "(ไม่มีชื่อ)"}
+                      </div>
+                      <div className="text-sm text-gray-500">{s.phone}</div>
+                      {s.address && (
+                        <div className="text-xs text-gray-400 truncate">
+                          {s.address}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+                {dedupStatus === "new" && (
+                  <div className="px-3 py-2.5 flex items-center gap-2 text-sm text-gray-600 bg-gray-50">
+                    <UserPlus className="w-4 h-4 text-gray-500" />
+                    <span>
+                      ไม่พบลูกค้าในระบบ —{" "}
+                      <span className="font-medium text-gray-900">
+                        สร้างเป็นลูกค้าใหม่
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
         </div>
 
         <div>
@@ -529,18 +630,14 @@ export default function OrderForm({
         </div>
       )}
 
-      {/* Sticky submit on mobile */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 md:static md:bg-transparent md:border-0 md:p-0 md:pt-2">
-        <div className="max-w-2xl mx-auto">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full min-h-[52px] py-3.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {submitting ? "กำลังบันทึก..." : submitLabel}
-          </button>
-        </div>
-      </div>
+      {/* Submit button */}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full min-h-[52px] py-3.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+      >
+        {submitting ? "กำลังบันทึก..." : submitLabel}
+      </button>
     </form>
   );
 }

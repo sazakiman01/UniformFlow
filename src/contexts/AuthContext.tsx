@@ -11,6 +11,7 @@ import {
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { UserProfile } from "@/types";
+import { can, normalizeRole } from "@/lib/roles";
 
 interface AuthContextType {
   user: User | null;
@@ -20,7 +21,14 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Backward-compat: true for owner/admin roles. Prefer `isOwner` going forward. */
   isAdmin: boolean;
+  isOwner: boolean;
+  isAccountant: boolean;
+  canManageFinance: boolean;
+  canViewFinance: boolean;
+  canManageOps: boolean;
+  canManageUsers: boolean;
   isDisabled: boolean;
 }
 
@@ -91,8 +99,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut(auth);
   };
 
-  const isAdmin = !!profile && profile.role === "admin" && !profile.disabled;
   const isDisabled = !!profile && profile.disabled === true;
+  const normalized = profile ? normalizeRole(profile.role) : undefined;
+  const isOwner = !!profile && !isDisabled && normalized === "owner";
+  const isAccountant = !!profile && !isDisabled && (normalized === "accountant" || normalized === "owner");
+  const isAdmin = isOwner; // backward-compat
+  const canManageFinance = can.manageFinance(profile);
+  const canViewFinance = can.viewFinance(profile);
+  const canManageOps = can.manageOps(profile);
+  const canManageUsers = can.manageUsers(profile);
 
   return (
     <AuthContext.Provider
@@ -105,6 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         isAdmin,
+        isOwner,
+        isAccountant,
+        canManageFinance,
+        canViewFinance,
+        canManageOps,
+        canManageUsers,
         isDisabled,
       }}
     >
