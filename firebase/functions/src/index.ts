@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-admin.initializeApp();
+const app = admin.initializeApp();
 
 // Example: Cloud Function to create order
 export const createOrder = functions.https.onCall(async (data, context) => {

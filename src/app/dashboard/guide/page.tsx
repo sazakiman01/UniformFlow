@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react/no-unescaped-entities */
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -332,9 +334,9 @@ export default function GuidePage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">วิธีแก้ไข</h3>
               <ol className="list-decimal list-inside space-y-2">
-                <li>ไปที่หน้า "ข้อมูลบริษัท"</li>
+                <li>ไปที่หน้า &quot;ข้อมูลบริษัท&quot;</li>
                 <li>แก้ไขข้อมูลในช่องที่ต้องการ</li>
-                <li>คลิก "บันทึก"</li>
+                <li>คลิก &quot;บันทึก&quot;</li>
                 <li>ข้อมูลจะถูกอัปเดตทันที</li>
               </ol>
             </div>
@@ -357,12 +359,12 @@ export default function GuidePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-3">สร้างเอกสารใหม่</h3>
               <ol className="list-decimal list-inside space-y-2 text-gray-700">
                 <li>ไปที่หน้าเอกสารที่ต้องการ (เช่น ใบกำกับภาษี)</li>
-                <li>คลิกปุ่ม "ออกเอกสารใหม่"</li>
+                <li>คลิกปุ่ม &quot;ออกเอกสารใหม่&quot;</li>
                 <li>เลือกลูกค้าจากรายการ (หรือสร้างลูกค้าใหม่)</li>
                 <li>เพิ่มรายการสินค้า/บริการ</li>
                 <li>กรอกจำนวน ราคาต่อหน่วย</li>
                 <li>ระบบจะคำนวณยอดรวมอัตโนมัติ</li>
-                <li>คลิก "บันทึก"</li>
+                <li>คลิก &quot;บันทึก&quot;</li>
               </ol>
             </div>
 
@@ -372,7 +374,7 @@ export default function GuidePage() {
                 <li>ไปที่หน้าเอกสารที่ต้องการ</li>
                 <li>คลิกที่เอกสารที่ต้องการแก้ไข</li>
                 <li>แก้ไขข้อมูลที่ต้องการ</li>
-                <li>คลิก "บันทึก"</li>
+                <li>คลิก &quot;บันทึก&quot;</li>
               </ol>
             </div>
 
@@ -380,9 +382,9 @@ export default function GuidePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-3">พิมพ์เอกสาร</h3>
               <ol className="list-decimal list-inside space-y-2 text-gray-700">
                 <li>เปิดเอกสารที่ต้องการพิมพ์</li>
-                <li>คลิกปุ่ม "พิมพ์"</li>
+                <li>คลิกปุ่ม &quot;พิมพ์&rdquo;</li>
                 <li>เลือกเครื่องพิมพ์</li>
-                <li>คลิก "พิมพ์"</li>
+                <li>คลิก &quot;พิมพ์&quot;</li>
               </ol>
             </div>
 
@@ -409,12 +411,12 @@ export default function GuidePage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">สร้างใบส่งของใหม่</h3>
               <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                <li>ไปที่หน้า "ใบส่งของ"</li>
-                <li>คลิกปุ่ม "สร้างใหม่"</li>
+                <li>ไปที่หน้า &quot;ใบส่งของ&rdquo;</li>
+                <li>คลิกปุ่ม &quot;สร้างใหม่&quot;</li>
                 <li>เลือกลูกค้า</li>
                 <li>เพิ่มรายการสินค้าที่จะส่ง</li>
                 <li>กรอกจำนวนที่ส่งจริง</li>
-                <li>คลิก "บันทึก"</li>
+                <li>คลิก &quot;บันทึก&quot;</li>
               </ol>
             </div>
 
@@ -438,22 +440,22 @@ export default function GuidePage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">บันทึกค่าใช้จ่ายใหม่</h3>
               <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                <li>ไปที่หน้า "ค่าใช้จ่าย"</li>
-                <li>คลิกปุ่ม "บันทึกค่าใช้จ่าย"</li>
+                <li>ไปที่หน้า &quot;ค่าใช้จ่าย&rdquo;</li>
+                <li>คลิกปุ่ม &quot;บันทึกค่าใช้จ่าย&rdquo;</li>
                 <li>เลือกหมวดหมู่ค่าใช้จ่าย</li>
                 <li>กรอกยอดเงิน</li>
                 <li>เพิ่มรายละเอียด (ถ้าจำเป็น)</li>
                 <li>เลือกวันที่</li>
-                <li>คลิก "บันทึก"</li>
+                <li>คลิก &quot;บันทึก&quot;</li>
               </ol>
             </div>
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">แก้ไข/ลบค่าใช้จ่าย</h3>
               <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                <li>ไปที่หน้า "ค่าใช้จ่าย"</li>
+                <li>ไปที่หน้า &quot;ค่าใช้จ่าย&rdquo;</li>
                 <li>คลิกที่รายการที่ต้องการแก้ไข</li>
-                <li>แก้ไขข้อมูล หรือคลิก "ลบ"</li>
+                <li>แก้ไขข้อมูล หรือคลิก &quot;ลบ&rdquo;</li>
                 <li>ยืนยันการลบ (ถ้าเลือกลบ)</li>
               </ol>
             </div>
