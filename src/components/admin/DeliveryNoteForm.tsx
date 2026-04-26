@@ -69,7 +69,7 @@ export default function DeliveryNoteForm() {
         createdBy: user.uid,
       };
       const { id } = await createDeliveryNote(data);
-      router.push(`/admin/delivery-notes/${id}`);
+      router.push(`/dashboard/delivery-notes/${id}`);
     } catch (e) {
       console.error(e);
       setErr("บันทึกไม่สำเร็จ");

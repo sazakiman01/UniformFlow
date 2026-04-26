@@ -11,7 +11,7 @@ import {
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { UserProfile } from "@/types";
-import { can, normalizeRole } from "@/lib/roles";
+import { can } from "@/lib/roles";
 
 interface AuthContextType {
   user: User | null;
@@ -21,14 +21,17 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  /** Backward-compat: true for owner/admin roles. Prefer `isOwner` going forward. */
+  /** Backward-compat alias of isOwner. */
   isAdmin: boolean;
   isOwner: boolean;
   isAccountant: boolean;
+  isStaff: boolean;
+  isViewer: boolean;
   canManageFinance: boolean;
   canViewFinance: boolean;
   canManageOps: boolean;
   canManageUsers: boolean;
+  canManageCompany: boolean;
   isDisabled: boolean;
 }
 
@@ -66,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: snap.id,
             email: d.email ?? user.email ?? "",
             displayName: d.displayName,
-            role: d.role ?? "user",
+            role: (d.role as UserProfile["role"]) ?? "viewer",
             disabled: d.disabled ?? false,
             lineUserId: d.lineUserId,
             invitedBy: d.invitedBy,
@@ -100,14 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isDisabled = !!profile && profile.disabled === true;
-  const normalized = profile ? normalizeRole(profile.role) : undefined;
-  const isOwner = !!profile && !isDisabled && normalized === "owner";
-  const isAccountant = !!profile && !isDisabled && (normalized === "accountant" || normalized === "owner");
-  const isAdmin = isOwner; // backward-compat
+  const role = profile?.role;
+  const isOwner = !!profile && !isDisabled && role === "owner";
+  const isAccountant = !!profile && !isDisabled && (role === "accountant" || role === "owner");
+  const isStaff = !!profile && !isDisabled && role === "staff";
+  const isViewer = !!profile && !isDisabled && role === "viewer";
+  const isAdmin = isOwner; // backward-compat alias
   const canManageFinance = can.manageFinance(profile);
   const canViewFinance = can.viewFinance(profile);
   const canManageOps = can.manageOps(profile);
   const canManageUsers = can.manageUsers(profile);
+  const canManageCompany = can.manageCompany(profile);
 
   return (
     <AuthContext.Provider
@@ -122,10 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         isOwner,
         isAccountant,
+        isStaff,
+        isViewer,
         canManageFinance,
         canViewFinance,
         canManageOps,
         canManageUsers,
+        canManageCompany,
         isDisabled,
       }}
     >

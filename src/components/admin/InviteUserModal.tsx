@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import { collection, doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types";
+import { ROLE_DESCRIPTIONS, ROLE_LABELS, UserRole } from "@/types";
 import {
   generateInviteToken,
   computeExpiresAt,
@@ -26,7 +26,7 @@ export default function InviteUserModal({
 }: InviteUserModalProps) {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>("user");
+  const [role, setRole] = useState<UserRole>("staff");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdLink, setCreatedLink] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function InviteUserModal({
 
   const reset = () => {
     setEmail("");
-    setRole("user");
+    setRole("staff");
     setError("");
     setCreatedLink(null);
     setCopied(false);
@@ -129,19 +129,24 @@ export default function InviteUserModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 บทบาท *
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(["user", "admin"] as UserRole[]).map((r) => (
+              <div className="grid grid-cols-1 gap-2">
+                {(["owner", "accountant", "staff", "viewer"] as UserRole[]).map((r) => (
                   <button
                     key={r}
                     type="button"
                     onClick={() => setRole(r)}
-                    className={`px-4 py-3 min-h-[48px] rounded-lg border-2 font-medium text-sm ${
+                    className={`px-4 py-3 rounded-lg border-2 text-left ${
                       role === r
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-gray-200 bg-white text-gray-600"
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-gray-200 bg-white hover:bg-gray-50"
                     }`}
                   >
-                    {r === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
+                    <div className={`font-medium text-sm ${role === r ? "text-blue-700" : "text-gray-900"}`}>
+                      {ROLE_LABELS[r]}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {ROLE_DESCRIPTIONS[r]}
+                    </div>
                   </button>
                 ))}
               </div>

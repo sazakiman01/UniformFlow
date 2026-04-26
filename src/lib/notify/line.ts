@@ -44,21 +44,6 @@ export async function sendLinePush(opts: {
   }
 }
 
-export async function notifyOrderCreated(orderInfo: {
-  orderId: string;
-  customerName: string;
-  totalAmount: number;
-}): Promise<void> {
-  await sendLinePush({
-    messages: [
-      {
-        type: "text",
-        text: `📦 ออเดอร์ใหม่\nลูกค้า: ${orderInfo.customerName}\nยอด: ${orderInfo.totalAmount.toLocaleString("th-TH")} บาท\nเลขที่: ${orderInfo.orderId}`,
-      },
-    ],
-  });
-}
-
 export async function notifyInvoicePaid(info: {
   invoiceNumber: string;
   customerName: string;

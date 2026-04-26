@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { Invite } from "@/types";
+import { Invite, ROLE_LABELS } from "@/types";
 import { effectiveStatus } from "@/lib/invite";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
@@ -126,7 +126,7 @@ function AcceptInviteInner() {
 
       // Ensure session active
       await signInWithEmailAndPassword(auth, invite.email, password);
-      router.push("/mobile/orders");
+      router.push("/dashboard");
     } catch (err: unknown) {
       console.error(err);
       const code = (err as { code?: string })?.code;
@@ -202,7 +202,7 @@ function AcceptInviteInner() {
             บทบาท
           </label>
           <div className="w-full px-4 py-3 min-h-[48px] bg-blue-50 border border-blue-200 rounded-lg text-blue-900 font-medium">
-            {invite.role === "admin" ? "ผู้ดูแลระบบ (Admin)" : "ผู้ใช้งาน (User)"}
+            {ROLE_LABELS[invite.role]}
           </div>
         </div>
 

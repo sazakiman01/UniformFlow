@@ -19,7 +19,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push("/mobile/orders");
+      router.push("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
       setError(

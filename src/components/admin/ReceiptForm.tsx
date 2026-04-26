@@ -68,7 +68,7 @@ export default function ReceiptForm() {
         notes: notes.trim() || undefined,
         createdBy: user.uid,
       });
-      router.push(`/admin/receipts/${id}`);
+      router.push(`/dashboard/receipts/${id}`);
     } catch (e) {
       console.error(e);
       setErr("บันทึกไม่สำเร็จ");

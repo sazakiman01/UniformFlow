@@ -8,22 +8,14 @@ export default function Home() {
           UniformFlow
         </h1>
         <p className="text-lg text-gray-600 mb-8">
-          ระบบจัดการคำสั่งงานผลิตชุดยูนิฟอร์ม
+          ระบบบัญชี การเงิน และภาษี สำหรับธุรกิจยูนิฟอร์ม
         </p>
-        <div className="space-x-4">
-          <Link
-            href="/mobile/orders"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            เข้าสู่ระบบ (Mobile)
-          </Link>
-          <Link
-            href="/admin/users"
-            className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Admin Dashboard
-          </Link>
-        </div>
+        <Link
+          href="/dashboard"
+          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          เข้าสู่ระบบ
+        </Link>
       </div>
     </main>
   );

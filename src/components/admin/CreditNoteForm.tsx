@@ -90,7 +90,7 @@ export default function CreditNoteForm({ invoiceId }: Props) {
         createdBy: user.uid,
       };
       const { id } = await createCreditNote(data);
-      router.push(`/admin/credit-notes/${id}`);
+      router.push(`/dashboard/credit-notes/${id}`);
     } catch (e) {
       console.error(e);
       setErr("บันทึกไม่สำเร็จ");

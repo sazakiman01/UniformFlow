@@ -107,7 +107,7 @@ export default function QuotationForm({ initial, initialCustomer }: Props) {
             byName: profile.displayName ?? profile.email,
           },
         });
-        router.push(`/admin/quotations/${initial.id}`);
+        router.push(`/dashboard/quotations/${initial.id}`);
       } else {
         const { id } = await createQuotation({
           ...payload,
@@ -117,7 +117,7 @@ export default function QuotationForm({ initial, initialCustomer }: Props) {
             byName: profile.displayName ?? profile.email,
           },
         });
-        router.push(`/admin/quotations/${id}`);
+        router.push(`/dashboard/quotations/${id}`);
       }
     } catch (e) {
       console.error(e);

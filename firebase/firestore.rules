@@ -16,17 +16,15 @@ service cloud.firestore {
     function role() {
       return userDoc().data.role;
     }
-    function isOwner()     { return isActiveUser() && (role() == 'owner' || role() == 'admin'); }
-    function isAccountant(){ return isActiveUser() && (role() == 'accountant' || role() == 'owner' || role() == 'admin'); }
+    function isOwner()     { return isActiveUser() && role() == 'owner'; }
+    function isAccountant(){ return isActiveUser() && (role() == 'accountant' || role() == 'owner'); }
     function isStaff()     { return isActiveUser() && role() != 'viewer'; }
     function isViewer()    { return isActiveUser(); }
 
-    // Backward-compat alias
-    function isAdmin() { return isOwner(); }
-
     // ── Users ────────────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if isAuth() && (request.auth.uid == uid || isOwner());
+      allow read: if isAuth() && request.auth.uid == uid;
+      allow read: if isOwner();
       allow create: if isAuth() && request.auth.uid == uid;
       allow update, delete: if isOwner();
     }
@@ -44,14 +42,11 @@ service cloud.firestore {
             && request.resource.data.token == resource.data.token);
     }
 
-    // ── Operations (orders, customers, production, inventory) ────────────
-    match /orders/{orderId}      { allow read: if isViewer(); allow write: if isStaff(); }
-    match /customers/{customerId}{ allow read: if isViewer(); allow write: if isStaff(); }
-    match /orderItems/{itemId}   { allow read: if isViewer(); allow write: if isStaff(); }
-    match /production/{prodId}   { allow read: if isViewer(); allow write: if isStaff(); }
-    match /tailors/{tailorId}    { allow read: if isViewer(); allow write: if isStaff(); }
-    match /inventory/{itemId}    { allow read: if isViewer(); allow write: if isStaff(); }
-    match /notifications/{notifId}{ allow read: if isViewer(); allow write: if isStaff(); }
+    // ── Customers ────────────────────────────────────────────────────────
+    match /customers/{customerId} {
+      allow read: if isViewer();
+      allow write: if isStaff();
+    }
 
     // ── Company Profile (singleton) ──────────────────────────────────────
     match /companyProfile/{docId} {

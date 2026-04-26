@@ -1,29 +1,34 @@
 // User (Firestore mirror of Firebase Auth + metadata)
-// New 4-role model. Legacy 'admin' = 'owner', legacy 'user' = 'staff' for backward-compat.
-export type UserRole = 'owner' | 'accountant' | 'staff' | 'viewer' | 'admin' | 'user';
+// 4-role model.
+export type UserRole = 'owner' | 'accountant' | 'staff' | 'viewer';
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   owner: 'เจ้าของกิจการ',
   accountant: 'ฝ่ายบัญชี',
   staff: 'พนักงาน',
   viewer: 'ผู้ดู (Read-only)',
-  admin: 'ผู้ดูแลระบบ (legacy)',
-  user: 'ผู้ใช้ (legacy)',
+};
+
+export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  owner: 'จัดการได้ทุกอย่าง รวมผู้ใช้ และข้อมูลบริษัท',
+  accountant: 'จัดการเอกสารการเงิน รายงาน และค่าใช้จ่าย',
+  staff: 'จัดการใบส่งของ และดูเอกสารอื่น ๆ',
+  viewer: 'ดูข้อมูลอย่างเดียว ไม่สามารถแก้ไขได้',
 };
 
 /** Returns true if role can manage finance (invoice, expense, reports) */
 export function canManageFinance(role: UserRole | undefined): boolean {
-  return role === 'owner' || role === 'accountant' || role === 'admin';
+  return role === 'owner' || role === 'accountant';
 }
 
 /** Returns true if role can view finance reports */
 export function canViewFinance(role: UserRole | undefined): boolean {
-  return role === 'owner' || role === 'accountant' || role === 'viewer' || role === 'admin';
+  return role === 'owner' || role === 'accountant' || role === 'viewer' || role === 'staff';
 }
 
-/** Returns true if role can manage operations (orders, production) */
+/** Returns true if role can manage operations (delivery notes) */
 export function canManageOperations(role: UserRole | undefined): boolean {
-  return role !== 'viewer' && !!role;
+  return role === 'owner' || role === 'accountant' || role === 'staff';
 }
 
 export interface UserProfile {
@@ -88,136 +93,6 @@ export interface Address {
   postcode: string;
   fullAddress: string;
 }
-
-// Order
-export interface Order {
-  id: string;
-  customerId: string;
-  orderNumber: string;
-  transferDate?: Date;
-  deliveryDateRange?: {
-    start: Date;
-    end: Date;
-  };
-  channel: 'L' | 'F' | 'OTHER';
-  items: OrderItem[];
-  totalAmount: number;
-  paidAmount: number;
-  remainingAmount: number;
-  discountAmount?: number;
-  receiptInfo?: ReceiptInfo;
-  status: OrderStatus;
-  paymentVerified: boolean;
-  emailCheckLink?: string;
-  notificationSent: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type OrderStatus = 'pending' | 'confirmed' | 'production' | 'ready' | 'shipped' | 'completed';
-
-// Order Item (embedded in Order.items array)
-export interface OrderItem {
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  description?: string;
-  specifications?: {
-    size?: string;
-    color?: string;
-    customNotes?: string;
-    logoImage?: string;
-  };
-}
-
-// Receipt Info
-export interface ReceiptInfo {
-  name?: string;
-  address?: string;
-  phone?: string;
-}
-
-// Production
-export interface Production {
-  id: string;
-  orderId: string;
-  tailorId: string;
-  status: ProductionStatus;
-  fabricReady: boolean;
-  fabricNote: string;
-  productionDetails: ProductionDetails;
-  progress: number; // 0-100
-  startedAt?: Date;
-  completedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type ProductionStatus = 'assigned' | 'in_progress' | 'completed' | 'delayed';
-
-export interface ProductionDetails {
-  logoImage?: string;
-  detailImage?: string;
-  printDetails?: string;
-  threadColor?: string;
-  customInstructions?: string;
-}
-
-// Tailor
-export interface Tailor {
-  id: string;
-  name: string;
-  phone: string;
-  specialties: string[];
-  active: boolean;
-  monthlyProduction: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Inventory
-export interface Inventory {
-  id: string;
-  fabricType: string;
-  fabricCode: string;
-  color: string;
-  quantity: number;
-  unit: string;
-  supplier: string;
-  lowStockThreshold: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Payment
-export interface Payment {
-  id: string;
-  orderId: string;
-  amount: number;
-  paymentMethod: 'transfer' | 'cash' | 'other';
-  transferDate?: Date;
-  slipImage?: string;
-  verified: boolean;
-  verifiedBy?: string;
-  verifiedAt?: Date;
-  createdAt: Date;
-}
-
-// Notification
-export interface Notification {
-  id: string;
-  orderId: string;
-  type: NotificationType;
-  recipient: string;
-  message: string;
-  sent: boolean;
-  sentAt?: Date;
-  scheduledFor?: Date;
-  createdAt: Date;
-}
-
-export type NotificationType = 'payment_reminder' | 'delivery_reminder' | 'production_update';
 
 // ════════════════════════════════════════════════════════════════════════════
 // ACCOUNTING / FINANCE / TAX (FlowAccount Replacement)

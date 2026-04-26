@@ -161,7 +161,7 @@ export default function InvoiceForm({ initial, initialCustomer, fromQuotation }:
             byName: profile.displayName ?? profile.email,
           },
         });
-        router.push(`/admin/invoices/${initial.id}`);
+        router.push(`/dashboard/invoices/${initial.id}`);
       } else {
         const { id } = await createInvoice({
           ...payload,
@@ -171,7 +171,7 @@ export default function InvoiceForm({ initial, initialCustomer, fromQuotation }:
             byName: profile.displayName ?? profile.email,
           },
         });
-        router.push(`/admin/invoices/${id}`);
+        router.push(`/dashboard/invoices/${id}`);
       }
     } catch (e) {
       console.error(e);

@@ -109,7 +109,7 @@ export default function BillingNoteForm() {
         notes: notes.trim() || undefined,
         createdBy: user.uid,
       });
-      router.push(`/admin/billing-notes/${id}`);
+      router.push(`/dashboard/billing-notes/${id}`);
     } catch (e) {
       console.error(e);
       setErr("บันทึกไม่สำเร็จ");
