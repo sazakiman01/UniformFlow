@@ -71,7 +71,12 @@ export interface Customer {
   branchCode?: string;             // '00000' = head office
   creditTerm?: number;             // days, default 0 (cash)
   defaultBillingAddress?: Address; // optional override of address for tax docs
+  contactPerson?: string;          // ผู้ติดต่อ (สำหรับนิติบุคคล)
   notes?: string;
+  // ── Opening balance (imported from previous accounting system) ──
+  openingBalance?: number;         // ยอดลูกหนี้คงค้าง ณ วันเริ่มใช้ระบบ
+  openingBalanceAsOf?: Date;       // วันตัดยอด
+  createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -245,6 +250,11 @@ export interface CompanyProfile {
   documentNumberingMode?: 'monthly' | 'yearly';  // default 'monthly'
   // Fiscal
   fiscalYearStartMonth?: number;  // 1-12, default 1 (January)
+  // ── Opening balances (เมื่อเริ่มใช้ระบบ) ──
+  systemStartDate?: Date;         // วันที่เริ่มใช้ระบบนี้
+  cashOpeningBalance?: number;    // ยอดเงินสดต้นงวด
+  bankOpeningBalances?: Record<string, number>; // key = accountNumber, value = ยอดต้นงวด
+  openingBalanceNotes?: string;
   createdAt: Date;
   updatedAt: Date;
 }

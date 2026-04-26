@@ -111,6 +111,20 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
 
+    // ── Receipts (ใบเสร็จรับเงิน — ออกแล้วแก้ไม่ได้) ─────────────────────
+    match /receipts/{receiptId} {
+      allow read: if isViewer();
+      allow create: if isAccountant();
+      allow update, delete: if false;
+    }
+
+    // ── Billing Notes (ใบวางบิล — แก้ status ได้) ────────────────────────
+    match /billingNotes/{noteId} {
+      allow read: if isViewer();
+      allow create, update: if isAccountant();
+      allow delete: if isOwner();
+    }
+
     // ── WHT Certificates (immutable after issue) ─────────────────────────
     match /whtCertificates/{whtId} {
       allow read: if isViewer();

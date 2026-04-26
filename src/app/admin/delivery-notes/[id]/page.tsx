@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { ArrowLeft, Loader2, Download, Truck, CheckCircle2 } from "lucide-react";
 import { getDeliveryNote, updateDeliveryNote } from "@/lib/delivery-notes";
 import { getCompanyProfile } from "@/lib/company";
