@@ -12,6 +12,7 @@ export const COMPANY_COLLECTION = 'companyProfile';
 const emptyAddress: Address = {
   street: '',
   district: '',
+  subdistrict: '',
   province: '',
   postcode: '',
   fullAddress: '',
@@ -66,7 +67,7 @@ export async function saveCompanyProfile(
 export function formatAddressLine(addr: Address | undefined): string {
   if (!addr) return '';
   if (addr.fullAddress) return addr.fullAddress;
-  return [addr.street, addr.district, addr.province, addr.postcode]
+  return [addr.street, addr.district, addr.subdistrict, addr.province, addr.postcode]
     .filter(Boolean)
     .join(' ');
 }

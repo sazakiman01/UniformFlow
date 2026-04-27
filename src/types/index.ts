@@ -89,6 +89,7 @@ export interface Customer {
 export interface Address {
   street: string;
   district: string;
+  subdistrict: string;
   province: string;
   postcode: string;
   fullAddress: string;

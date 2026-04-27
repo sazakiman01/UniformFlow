@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search, UserPlus, X, CheckCircle2 } from "lucide-react";
+import { Search, UserPlus, X, CheckCircle2, Globe, Loader2, AlertCircle, SearchX } from "lucide-react";
 import {
   listCustomers,
   createCustomer,
   updateCustomer,
 } from "@/lib/customers";
 import { isValidThaiTaxId } from "@/lib/money";
+import { searchDBDCompany, mapDBDCompanyToUniformFlow, type DBDCompany } from "@/lib/dbd";
 import type { Customer, CustomerType, Address } from "@/types";
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 const emptyAddress: Address = {
   street: "",
   district: "",
+  subdistrict: "",
   province: "",
   postcode: "",
   fullAddress: "",
@@ -74,7 +76,7 @@ export default function CustomerPicker({ value, onChange }: Props) {
             </div>
             <div className="text-xs text-gray-500 mt-1">
               {value.address.fullAddress ||
-                [value.address.street, value.address.district, value.address.province, value.address.postcode]
+                [value.address.street, value.address.district, value.address.subdistrict, value.address.province, value.address.postcode]
                   .filter(Boolean)
                   .join(" ")}
             </div>
@@ -199,8 +201,67 @@ function CustomerEditModal({ customer, initialName, onClose, onSaved }: ModalPro
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [dbdSearch, setDbdSearch] = useState("");
+  const [dbdResults, setDbdResults] = useState<DBDCompany[]>([]);
+  const [showDbdResults, setShowDbdResults] = useState(false);
+  const [dbdLoading, setDbdLoading] = useState(false);
+  const [dbdError, setDbdError] = useState<string | null>(null);
+  const dbdWrapperRef = useRef<HTMLDivElement>(null);
 
   const taxValid = !form.taxId || isValidThaiTaxId(form.taxId);
+
+  // DBD search debounce
+  useEffect(() => {
+    if (!dbdSearch || dbdSearch.length < 3 || form.customerType !== "corporate") {
+      setDbdResults([]);
+      setShowDbdResults(false);
+      setDbdError(null);
+      return;
+    }
+    setDbdLoading(true);
+    setDbdError(null);
+    const t = setTimeout(async () => {
+      try {
+        const results = await searchDBDCompany(dbdSearch, 5);
+        setDbdResults(results);
+        setShowDbdResults(results.length > 0);
+        setDbdError(null);
+      } catch {
+        setDbdError("ไม่สามารถค้นหาข้อมูลจาก DBD ได้");
+        setShowDbdResults(false);
+      } finally {
+        setDbdLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [dbdSearch, form.customerType]);
+
+  // Close DBD dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dbdWrapperRef.current && !dbdWrapperRef.current.contains(e.target as Node)) {
+        setShowDbdResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function handleSelectDBDResult(dbdCompany: DBDCompany) {
+    const mapped = mapDBDCompanyToUniformFlow(dbdCompany);
+    setForm((s) => ({
+      ...s,
+      name: mapped.name,
+      taxId: mapped.taxId,
+      address: {
+        ...s.address,
+        ...mapped.address,
+      },
+    }));
+    setDbdSearch("");
+    setDbdResults([]);
+    setShowDbdResults(false);
+  }
 
   async function handleSave() {
     setErr(null);
@@ -272,6 +333,63 @@ function CustomerEditModal({ customer, initialName, onClose, onSaved }: ModalPro
               onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
             />
           </Field>
+
+          {form.customerType === "corporate" && (
+            <div ref={dbdWrapperRef} className="relative">
+              <Field label="ค้นหาจาก DBD (กรมพัฒนาธุรกิจการค้า)" hint="ขั้นต่ำ 3 ตัวอักษร">
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder="พิมพ์ชื่อบริษัท..."
+                    value={dbdSearch}
+                    onChange={(e) => {
+                      setDbdSearch(e.target.value);
+                      if (e.target.value.length >= 3) setShowDbdResults(true);
+                    }}
+                    onFocus={() => {
+                      if (dbdSearch.length >= 3) setShowDbdResults(true);
+                    }}
+                  />
+                </div>
+              </Field>
+              {dbdLoading && (
+                <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                  <span className="text-sm text-gray-600">กำลังค้นหา...</span>
+                </div>
+              )}
+              {dbdError && (
+                <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-red-200 rounded-lg shadow-lg p-3 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                  <span className="text-sm text-red-600">{dbdError}</span>
+                </div>
+              )}
+              {showDbdResults && !dbdLoading && !dbdError && dbdResults.length === 0 && (
+                <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 flex items-center gap-2">
+                  <SearchX className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-500">ไม่พบข้อมูลบริษัทที่ค้นหา</span>
+                </div>
+              )}
+              {showDbdResults && !dbdLoading && !dbdError && dbdResults.length > 0 && (
+                <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {dbdResults.map((company, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectDBDResult(company)}
+                      className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b last:border-0"
+                    >
+                      <div className="font-medium text-gray-900 text-sm">{company.ชื่อนิติบุคคล}</div>
+                      <div className="text-xs text-gray-500">
+                        {company.เลขทะเบียน} · {company.จังหวัด}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field label="เบอร์โทร">
               <input
@@ -329,9 +447,15 @@ function CustomerEditModal({ customer, initialName, onClose, onSaved }: ModalPro
             <div className="grid grid-cols-3 gap-2">
               <input
                 className={inputCls}
-                placeholder="แขวง"
+                placeholder="แขวง/ตำบล"
                 value={form.address.district}
                 onChange={(e) => setForm((s) => ({ ...s, address: { ...s.address, district: e.target.value } }))}
+              />
+              <input
+                className={inputCls}
+                placeholder="เขต/อำเภอ"
+                value={form.address.subdistrict}
+                onChange={(e) => setForm((s) => ({ ...s, address: { ...s.address, subdistrict: e.target.value } }))}
               />
               <input
                 className={inputCls}
@@ -339,17 +463,17 @@ function CustomerEditModal({ customer, initialName, onClose, onSaved }: ModalPro
                 value={form.address.province}
                 onChange={(e) => setForm((s) => ({ ...s, address: { ...s.address, province: e.target.value } }))}
               />
-              <input
-                className={inputCls}
-                placeholder="ไปรษณีย์"
-                value={form.address.postcode}
-                inputMode="numeric"
-                maxLength={5}
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, address: { ...s.address, postcode: e.target.value.replace(/\D/g, "") } }))
-                }
-              />
             </div>
+            <input
+              className={inputCls}
+              placeholder="รหัสไปรษณีย์"
+              value={form.address.postcode}
+              inputMode="numeric"
+              maxLength={5}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, address: { ...s.address, postcode: e.target.value.replace(/\D/g, "") } }))
+              }
+            />
             <textarea
               className={inputCls}
               rows={2}

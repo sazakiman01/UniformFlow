@@ -11,7 +11,7 @@ import type { Customer, DeliveryNote, Address } from "@/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyAddress: Address = {
-  street: "", district: "", province: "", postcode: "", fullAddress: "",
+  street: "", district: "", subdistrict: "", province: "", postcode: "", fullAddress: "",
 };
 
 interface DNItem {

@@ -92,6 +92,7 @@ export function mapRowsToImport(rows: Record<string, string>[]): ImportRow[] {
     const address: Address = {
       street: "",
       district: "",
+      subdistrict: "",
       province: "",
       postcode: "",
       fullAddress: addrFull,

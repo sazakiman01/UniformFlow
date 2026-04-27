@@ -158,9 +158,14 @@ export default function CompanyProfilePage() {
           <Field label="แขวง/ตำบล">
             <input className={inputCls} value={form.address.district} onChange={(e) => updateAddress("district", e.target.value)} />
           </Field>
+          <Field label="เขต/อำเภอ">
+            <input className={inputCls} value={form.address.subdistrict} onChange={(e) => updateAddress("subdistrict", e.target.value)} />
+          </Field>
           <Field label="จังหวัด">
             <input className={inputCls} value={form.address.province} onChange={(e) => updateAddress("province", e.target.value)} />
           </Field>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="รหัสไปรษณีย์">
             <input className={inputCls} value={form.address.postcode} maxLength={5} inputMode="numeric"
               onChange={(e) => updateAddress("postcode", e.target.value.replace(/\D/g, ""))}

@@ -22,6 +22,7 @@ const NAV_ITEMS: NavEntry[] = [
   { type: "divider", label: "หน้าหลัก" },
   { href: "/dashboard", label: "ภาพรวม", icon: BarChart3 },
   { type: "divider", label: "จัดการ" },
+  { href: "/dashboard/customers", label: "ลูกค้า", icon: Users, requires: "manageFinance" },
   { href: "/dashboard/users", label: "ผู้ใช้", icon: Users, requires: "manageUsers" },
   { href: "/dashboard/company", label: "ข้อมูลบริษัท", icon: Building2, requires: "manageCompany" },
   { type: "divider", label: "เอกสารการเงิน" },

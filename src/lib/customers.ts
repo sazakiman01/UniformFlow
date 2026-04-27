@@ -9,6 +9,7 @@ import {
   limit as fsLimit,
   addDoc,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
@@ -24,7 +25,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Customer {
     phone: (d.phone as string) ?? "",
     lineUserId: d.lineUserId as string | undefined,
     email: d.email as string | undefined,
-    address: (d.address as Address) ?? { street: "", district: "", province: "", postcode: "", fullAddress: "" },
+    address: (d.address as Address) ?? { street: "", district: "", subdistrict: "", province: "", postcode: "", fullAddress: "" },
     channel: (d.channel as Customer["channel"]) ?? "OTHER",
     taxId: d.taxId as string | undefined,
     customerType: d.customerType as Customer["customerType"],
@@ -87,6 +88,10 @@ export async function updateCustomer(
   patch: Partial<Omit<Customer, "id" | "createdAt" | "updatedAt">>,
 ): Promise<void> {
   await updateDoc(doc(db, CUSTOMERS, id), { ...patch, updatedAt: serverTimestamp() });
+}
+
+export async function deleteCustomer(id: string): Promise<void> {
+  await deleteDoc(doc(db, CUSTOMERS, id));
 }
 
 /** Build a frozen customer snapshot for embedding in tax-bound documents. */
