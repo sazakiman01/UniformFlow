@@ -45,6 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      // Set profileLoading=true BEFORE setUser to prevent race condition
+      // where guards see (user && !profile && !profileLoading) and redirect.
+      if (u) setProfileLoading(true);
       setUser(u);
       setLoading(false);
     });
