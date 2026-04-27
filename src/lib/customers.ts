@@ -70,8 +70,12 @@ export async function findCustomerByPhone(phone: string): Promise<Customer | nul
 export async function createCustomer(
   data: Omit<Customer, "id" | "createdAt" | "updatedAt">,
 ): Promise<string> {
+  // Filter out undefined values before sending to Firestore
+  const sanitizedData = Object.fromEntries(
+    Object.entries(data).filter(([_, v]) => v !== undefined)
+  );
   const ref = await addDoc(collection(db, CUSTOMERS), {
-    ...data,
+    ...sanitizedData,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
