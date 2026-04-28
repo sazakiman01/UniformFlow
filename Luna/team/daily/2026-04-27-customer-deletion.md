@@ -18,3 +18,13 @@
 - d:\coding\UniformFlow\src\app\dashboard\layout.tsx (เพิ่ม link ลูกค้าใน NAV_ITEMS)
 
 **Role:** Nova (Backend) + Stella (Frontend)
+
+### UI Improvement (2026-04-27 23:08)
+**สิ่งที่เปลี่ยน:**
+- ลบฟิลด์ "ที่อยู่เต็มสำหรับเอกสาร" ออกจาก CustomerPicker
+- ลูกค้าบอกไม่ได้ใช้ จึงลบออกเพื่อลดความซับซ้อน
+
+**ไฟล์ที่แก้ไข:**
+- d:\coding\UniformFlow\src\components\admin\CustomerPicker.tsx (ลบ textarea fullAddress)
+
+**Role:** Stella (Frontend)

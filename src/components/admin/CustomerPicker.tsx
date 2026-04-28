@@ -474,13 +474,6 @@ function CustomerEditModal({ customer, initialName, onClose, onSaved }: ModalPro
                 setForm((s) => ({ ...s, address: { ...s.address, postcode: e.target.value.replace(/\D/g, "") } }))
               }
             />
-            <textarea
-              className={inputCls}
-              rows={2}
-              placeholder="ที่อยู่เต็มสำหรับเอกสาร (ถ้าเว้นว่างจะรวมจากด้านบน)"
-              value={form.address.fullAddress}
-              onChange={(e) => setForm((s) => ({ ...s, address: { ...s.address, fullAddress: e.target.value } }))}
-            />
           </fieldset>
         </div>
         <div className="sticky bottom-0 bg-white border-t p-4 flex items-center justify-end gap-2">
