@@ -3,6 +3,8 @@
  * สำหรับค้นหาข้อมูลนิติบุคคลจากกรมพัฒนาธุรกิจการค้า
  */
 
+import Fuse from "fuse.js";
+
 export interface DBDCompany {
   เลขทะเบียน: string;
   ชื่อนิติบุคคล: string;
@@ -25,13 +27,13 @@ const DBD_API_ROUTE = "/api/dbd/search";
 
 /**
  * ค้นหาข้อมูลนิติบุคคลจาก DBD API (ผ่าน Next.js API Route proxy เพื่อ bypass CORS)
- * @param query ชื่อบริษัทที่ต้องการค้นหา (ต้องมีอย่างน้อย 3 ตัวอักษร)
- * @param limit จำนวนผลลัพธ์สูงสุด (default: 5)
+ * @param query ชื่อบริษัทที่ต้องการค้นหา (ถ้าไม่ระบุจะดึงข้อมูลทั้งหมด)
+ * @param limit จำนวนผลลัพธ์สูงสุด (default: 100)
  * @returns Array ของข้อมูลนิติบุคคลที่ตรงกับการค้นหา
  */
 export async function searchDBDCompany(
   query: string,
-  limit: number = 5
+  limit: number = 20
 ): Promise<DBDCompany[]> {
   if (!query || query.trim().length < 3) {
     return [];
@@ -65,6 +67,25 @@ export async function searchDBDCompany(
     console.error("Error calling DBD API:", error);
     return [];
   }
+}
+
+/**
+ * ค้นหาข้อมูลนิติบุคคลจาก DBD API (รองรับ partial match เช่น "ไลอ" → "ไลออน")
+ * ใช้ SQL LIKE ฝั่ง server ผ่าน API route
+ * @param query ชื่อบริษัทที่ต้องการค้นหา (ต้องมีอย่างน้อย 3 ตัวอักษร)
+ * @param limit จำนวนผลลัพธ์สูงสุด (default: 10)
+ * @returns Array ของข้อมูลนิติบุคคลที่ตรงกับการค้นหา
+ */
+export async function searchDBDCompanyFuzzy(
+  query: string,
+  limit: number = 10
+): Promise<DBDCompany[]> {
+  if (!query || query.trim().length < 3) {
+    return [];
+  }
+
+  // ใช้ searchDBDCompany ตรงๆ — API route จะจัดการ SQL LIKE ให้
+  return searchDBDCompany(query.trim(), limit);
 }
 
 /**

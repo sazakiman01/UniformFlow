@@ -8,7 +8,7 @@ import {
   updateCustomer,
 } from "@/lib/customers";
 import { isValidThaiTaxId } from "@/lib/money";
-import { searchDBDCompany, mapDBDCompanyToUniformFlow, type DBDCompany } from "@/lib/dbd";
+import { searchDBDCompanyFuzzy, mapDBDCompanyToUniformFlow, type DBDCompany } from "@/lib/dbd";
 import type { Customer, CustomerType, Address } from "@/types";
 
 interface Props {
@@ -222,7 +222,7 @@ function CustomerEditModal({ customer, initialName, onClose, onSaved }: ModalPro
     setDbdError(null);
     const t = setTimeout(async () => {
       try {
-        const results = await searchDBDCompany(dbdSearch, 5);
+        const results = await searchDBDCompanyFuzzy(dbdSearch, 20);
         setDbdResults(results);
         setShowDbdResults(results.length > 0);
         setDbdError(null);
