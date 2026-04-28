@@ -131,8 +131,14 @@ export async function createInvoice(
   const amountPaid = 0;
   const whtAmt = input.withholdingTaxAmount ?? 0;
   const amountDue = round2(input.grandTotal - amountPaid - whtAmt);
+
+  // Filter out undefined values before sending to Firestore
+  const sanitizedInput = Object.fromEntries(
+    Object.entries(input).filter(([_, v]) => v !== undefined)
+  ) as unknown as CreateInvoiceInput;
+
   await setDoc(ref, {
-    ...input,
+    ...sanitizedInput,
     number: issued.number,
     amountPaid,
     amountDue,
@@ -163,7 +169,13 @@ export async function updateInvoice(
   if (sentAt) data.sentAt = Timestamp.fromDate(sentAt);
   if (cancelledAt) data.cancelledAt = Timestamp.fromDate(cancelledAt);
   if (audit) data.auditLog = arrayUnion({ ...audit, at: Timestamp.now() });
-  await updateDoc(doc(db, INVOICES, id), data);
+
+  // Filter out undefined values before sending to Firestore
+  const sanitizedData = Object.fromEntries(
+    Object.entries(data).filter(([_, v]) => v !== undefined)
+  );
+
+  await updateDoc(doc(db, INVOICES, id), sanitizedData);
 }
 
 export async function cancelInvoice(
