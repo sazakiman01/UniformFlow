@@ -96,7 +96,7 @@ export async function deleteCustomer(id: string): Promise<void> {
 
 /** Build a frozen customer snapshot for embedding in tax-bound documents. */
 export function buildCustomerSnapshot(c: Customer): CustomerSnapshot {
-  return {
+  const snapshot: Partial<CustomerSnapshot> = {
     name: c.name,
     taxId: c.taxId,
     customerType: c.customerType,
@@ -105,4 +105,9 @@ export function buildCustomerSnapshot(c: Customer): CustomerSnapshot {
     phone: c.phone,
     email: c.email,
   };
+  // Filter out undefined values before returning (Firestore doesn't accept undefined)
+  const filtered = Object.fromEntries(
+    Object.entries(snapshot).filter(([_, v]) => v !== undefined)
+  ) as unknown;
+  return filtered as CustomerSnapshot;
 }

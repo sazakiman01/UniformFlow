@@ -1,16 +1,17 @@
 import { Font, StyleSheet } from "@react-pdf/renderer";
 
-// Sarabun is the Thai default font (open license, hosted on Google Fonts).
+// Noto Sans Thai is the Thai default font (open license, hosted on Google Fonts).
 // React-PDF requires absolute URLs for font files.
+// Using GitHub raw URLs from official Google Noto Fonts repo for stability.
 let _registered = false;
 export function ensureFontsRegistered() {
   if (_registered) return;
   Font.register({
-    family: "Sarabun",
+    family: "Noto Sans Thai",
     fonts: [
-      { src: "https://fonts.gstatic.com/s/sarabun/v15/DtVjJx26TKEr37c9YK5sg00.ttf", fontWeight: 400 },
-      { src: "https://fonts.gstatic.com/s/sarabun/v15/DtVmJx26TKEr37c9YOpvJSlAjA.ttf", fontWeight: 600 },
-      { src: "https://fonts.gstatic.com/s/sarabun/v15/DtVmJx26TKEr37c9YOZxJilAjA.ttf", fontWeight: 700 },
+      { src: "https://raw.githubusercontent.com/notofonts/thai/main/hinted/ttf/NotoSansThai-Regular.ttf", fontWeight: 400 },
+      { src: "https://raw.githubusercontent.com/notofonts/thai/main/hinted/ttf/NotoSansThai-SemiBold.ttf", fontWeight: 600 },
+      { src: "https://raw.githubusercontent.com/notofonts/thai/main/hinted/ttf/NotoSansThai-Bold.ttf", fontWeight: 700 },
     ],
   });
   _registered = true;
@@ -27,7 +28,7 @@ export const colors = {
 export const docStyles = StyleSheet.create({
   page: {
     padding: 36,
-    fontFamily: "Sarabun",
+    fontFamily: "Noto Sans Thai",
     fontSize: 10,
     color: colors.text,
     lineHeight: 1.4,

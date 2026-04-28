@@ -96,8 +96,14 @@ export async function createQuotation(input: CreateQuotationInput): Promise<{ id
   const auditEntry = input.audit
     ? [{ ...input.audit, at: Timestamp.now() }]
     : [];
+
+  // Filter out undefined values before sending to Firestore
+  const sanitizedInput = Object.fromEntries(
+    Object.entries(input).filter(([_, v]) => v !== undefined)
+  ) as unknown as CreateQuotationInput;
+
   await setDoc(ref, {
-    ...input,
+    ...sanitizedInput,
     number: issued.number,
     auditLog: auditEntry,
     validUntil: Timestamp.fromDate(input.validUntil),
@@ -125,5 +131,11 @@ export async function updateQuotation(
     const { arrayUnion } = await import("firebase/firestore");
     data.auditLog = arrayUnion({ ...audit, at: Timestamp.now() });
   }
-  await updateDoc(doc(db, QUOTATIONS, id), data);
+
+  // Filter out undefined values before sending to Firestore
+  const sanitizedData = Object.fromEntries(
+    Object.entries(data).filter(([_, v]) => v !== undefined)
+  );
+
+  await updateDoc(doc(db, QUOTATIONS, id), sanitizedData);
 }
