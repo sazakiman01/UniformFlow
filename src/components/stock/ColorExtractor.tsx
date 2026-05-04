@@ -166,7 +166,7 @@ export default function ColorExtractor({ onColorsAdd, maxColors = DEFAULT_MAX_PI
     <div className="space-y-3">
       {/* Tips */}
       <div className="text-xs text-gray-700 bg-blue-50 border border-blue-100 p-2.5 rounded-lg">
-        <p className="font-medium mb-1 text-blue-900">💡 เคล็ดลับการถ่ายรูป:</p>
+        <p className="font-medium mb-1 text-blue-900">💡 วิธีการถ่ายรูปให้ได้สีที่ตรง:</p>
         <ul className="list-disc list-inside space-y-0.5">
           <li>ถ่ายรูปผ้าใกล้ๆ หรือครอบตัดพื้นหลังออก</li>
           <li>ให้แสงสว่างเพียงพอและไม่มีเงา</li>

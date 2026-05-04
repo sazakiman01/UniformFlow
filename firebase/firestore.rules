@@ -170,10 +170,17 @@ service cloud.firestore {
       }
 
       allow read: if isActiveUser();
-      allow update, delete: if isWarehouse() && isValidCatalogData(request.resource.data);
+      allow update: if isWarehouse() && isValidCatalogData(request.resource.data);
+      allow delete: if isWarehouse();
       // Allow create for warehouse role or if createdBy matches current user
       allow create: if (isWarehouse() || request.resource.data.createdBy == request.auth.uid)
         && isValidCatalogData(request.resource.data);
+    }
+
+    // ── Business Model Canvas (Admin/Executive Only) ───────────────────────
+    match /businessModelCanvas/{canvasId} {
+      allow read: if isOwner();
+      allow write: if isOwner();
     }
 
     // ── Default deny ─────────────────────────────────────────────────────

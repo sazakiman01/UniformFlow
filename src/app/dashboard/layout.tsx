@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, LogOut, Building2, FileText, Receipt, Wallet, BarChart3, Truck, FileMinus, ReceiptText, Wrench, Menu, X, BookOpen, Package, ChevronDown, ChevronRight, Palette } from "lucide-react";
+import { Loader2, Users, LogOut, Building2, FileText, Receipt, Wallet, BarChart3, Truck, FileMinus, ReceiptText, Wrench, Menu, X, BookOpen, Package, ChevronDown, ChevronRight, Palette, LayoutGrid } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ROLE_LABELS, UserProfile } from "@/types";
 import { can, PermissionKey } from "@/lib/roles";
@@ -57,6 +57,15 @@ const NAV_ITEMS: NavEntry[] = [
       { href: "/dashboard/customers", label: "ลูกค้า", icon: Users, requires: "manageFinance" },
       { href: "/dashboard/users", label: "ผู้ใช้", icon: Users, requires: "manageUsers" },
       { href: "/dashboard/company", label: "ข้อมูลบริษัท", icon: Building2, requires: "manageCompany" },
+    ],
+  },
+  {
+    type: "submenu",
+    label: "ผู้บริหาร",
+    icon: LayoutGrid,
+    requires: "manageUsers",
+    children: [
+      { href: "/dashboard/admin/business-model", label: "Business Model Canvas", icon: LayoutGrid, requires: "manageUsers" },
     ],
   },
   {

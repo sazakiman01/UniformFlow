@@ -2,6 +2,38 @@
 // 5-role model (added warehouse for stock management).
 export type UserRole = 'owner' | 'accountant' | 'staff' | 'viewer' | 'warehouse';
 
+// Business Model Canvas
+export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
+export type Period = 'month' | 'quarter' | 'year';
+
+export interface BusinessModelCanvas {
+  id: string;
+  year: number;
+  quarter: Quarter;
+  version: number;
+  customerSegments: string[];
+  valuePropositions: string[];
+  channels: string[];
+  customerRelationships: string[];
+  revenueStreams: Array<{
+    name: string;
+    estimatedRevenue: number;
+    period: Period;
+  }>;
+  keyResources: string[];
+  keyActivities: string[];
+  keyPartnerships: string[];
+  costStructure: Array<{
+    name: string;
+    estimatedCost: number;
+    period: Period;
+  }>;
+  notes?: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const ROLE_LABELS: Record<UserRole, string> = {
   owner: 'เจ้าของกิจการ',
   accountant: 'ฝ่ายบัญชี',

@@ -241,11 +241,14 @@ export default function ColorCatalogsPage() {
                           let parsedDate: Date;
                           if (date instanceof Date) {
                             parsedDate = date;
-                          } else if (typeof (date as any)?.toDate === "function") {
-                            // Firebase Timestamp
-                            parsedDate = (date as any).toDate();
                           } else {
-                            parsedDate = new Date(date as any);
+                            const firebaseTimestamp = date as { toDate: () => Date } | string | number;
+                            if (typeof firebaseTimestamp === "object" && firebaseTimestamp !== null && "toDate" in firebaseTimestamp) {
+                              // Firebase Timestamp
+                              parsedDate = firebaseTimestamp.toDate();
+                            } else {
+                              parsedDate = new Date(firebaseTimestamp as string | number);
+                            }
                           }
                           if (isNaN(parsedDate.getTime())) return "-";
                           return parsedDate.toLocaleDateString("th-TH");
@@ -393,9 +396,9 @@ export default function ColorCatalogsPage() {
 
                 {/* Compact Grid */}
                 {formData.colors.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">ยังไม่มีสีวัตถุดิบ คลิก "+ เพิ่มสี" หรือ "เลือกสีจากรูป" เพื่อเริ่ม</p>
+                  <p className="text-sm text-gray-500 text-center py-4">ยังไม่มีสีวัตถุดิบ คลิก &ldquo;+ เพิ่มสี&rdquo; หรือ &ldquo;เลือกสีจากรูป&rdquo; เพื่อเริ่ม</p>
                 ) : (
-                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                  <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 gap-2">
                     {formData.colors.map((color, index) => {
                       const q = colorSearchQuery.trim().toLowerCase();
                       const matches = !q || color.hex.toLowerCase().includes(q) || color.code.toLowerCase().includes(q) || color.name.toLowerCase().includes(q);
@@ -409,12 +412,26 @@ export default function ColorCatalogsPage() {
                           title={`${color.hex}${color.code ? ` (${color.code})` : ""}${color.name ? ` - ${color.name}` : ""}`}
                         >
                           <div
-                            className="w-10 h-10 rounded-md border border-gray-300 group-hover:ring-2 group-hover:ring-blue-400"
+                            className="w-12 h-12 rounded-md border border-gray-300 group-hover:ring-2 group-hover:ring-blue-400"
                             style={{ backgroundColor: color.hex }}
                           />
-                          <span className="text-[10px] text-gray-600 truncate w-full text-center">
-                            {color.code || color.hex.slice(1, 7).toUpperCase()}
-                          </span>
+                          <div className="flex flex-col items-center gap-0.5 w-full">
+                            {color.code && (
+                              <span className="text-[10px] font-medium text-gray-700 truncate w-full text-center">
+                                {color.code}
+                              </span>
+                            )}
+                            {color.name && (
+                              <span className="text-[9px] text-gray-500 truncate w-full text-center">
+                                {color.name}
+                              </span>
+                            )}
+                            {!color.code && !color.name && (
+                              <span className="text-[9px] text-gray-400 truncate w-full text-center">
+                                {color.hex.slice(1, 7).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
                         </button>
                       );
                     })}

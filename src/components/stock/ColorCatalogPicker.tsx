@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { StockCategory } from "@/types";
-import { getFabricCatalogs, getCatalogColors, generateSKU, groupColorsByFamily } from "@/data/fabric-catalogs";
+import { StockCategory, FabricColor } from "@/types";
+import { getFabricCatalogs, getCatalogColors, groupColorsByFamily } from "@/data/fabric-catalogs";
 import {
   Select,
   SelectContent,
@@ -22,6 +22,13 @@ interface ColorCatalogPickerProps {
   disabled?: boolean;
 }
 
+interface FabricCatalog {
+  code: string;
+  name: string;
+  category: StockCategory;
+  colors: FabricColor[];
+}
+
 export default function ColorCatalogPicker({
   category = "fabric",
   catalogCode = "",
@@ -30,7 +37,7 @@ export default function ColorCatalogPicker({
   onColorChange,
   disabled = false,
 }: ColorCatalogPickerProps) {
-  const [catalogs, setCatalogs] = useState<any[]>([]);
+  const [catalogs, setCatalogs] = useState<FabricCatalog[]>([]);
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {

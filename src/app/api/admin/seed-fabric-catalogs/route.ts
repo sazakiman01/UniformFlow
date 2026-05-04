@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { collection, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { FABRIC_CATALOGS } from "@/data/fabric-catalogs";
-import { useAuth } from "@/contexts/AuthContext";
 
 export async function POST() {
   try {
@@ -14,7 +13,7 @@ export async function POST() {
 
     let createdCount = 0;
     let skippedCount = 0;
-    const errors: any[] = [];
+    const errors: Array<{ code: string; error: string }> = [];
 
     for (const catalog of FABRIC_CATALOGS) {
       try {
@@ -42,9 +41,10 @@ export async function POST() {
         
         createdCount++;
         console.log(`Successfully created catalog: ${catalog.code}`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Error creating catalog ${catalog.code}:`, error);
-        errors.push({ code: catalog.code, error: error.message });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        errors.push({ code: catalog.code, error: errorMessage });
       }
     }
 
