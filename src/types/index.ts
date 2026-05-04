@@ -1,12 +1,13 @@
 // User (Firestore mirror of Firebase Auth + metadata)
-// 4-role model.
-export type UserRole = 'owner' | 'accountant' | 'staff' | 'viewer';
+// 5-role model (added warehouse for stock management).
+export type UserRole = 'owner' | 'accountant' | 'staff' | 'viewer' | 'warehouse';
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   owner: 'เจ้าของกิจการ',
   accountant: 'ฝ่ายบัญชี',
   staff: 'พนักงาน',
   viewer: 'ผู้ดู (Read-only)',
+  warehouse: 'พนักงานคลังสินค้า',
 };
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
@@ -14,6 +15,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   accountant: 'จัดการเอกสารการเงิน รายงาน และค่าใช้จ่าย',
   staff: 'จัดการใบส่งของ และดูเอกสารอื่น ๆ',
   viewer: 'ดูข้อมูลอย่างเดียว ไม่สามารถแก้ไขได้',
+  warehouse: 'จัดการสต็อกวัตถุดิบ บันทึกการรับ-ส่ง และรายงานสต็อก',
 };
 
 /** Returns true if role can manage finance (invoice, expense, reports) */
@@ -29,6 +31,21 @@ export function canViewFinance(role: UserRole | undefined): boolean {
 /** Returns true if role can manage operations (delivery notes) */
 export function canManageOperations(role: UserRole | undefined): boolean {
   return role === 'owner' || role === 'accountant' || role === 'staff';
+}
+
+/** Returns true if role can manage stock (items, movements, adjustments) */
+export function canManageStock(role: UserRole | undefined): boolean {
+  return role === 'owner' || role === 'accountant' || role === 'warehouse';
+}
+
+/** Returns true if role can view stock */
+export function canViewStock(role: UserRole | undefined): boolean {
+  return role !== undefined; // All logged-in users can view
+}
+
+/** Returns true if role can adjust stock (manual adjustments) */
+export function canAdjustStock(role: UserRole | undefined): boolean {
+  return role === 'owner' || role === 'accountant' || role === 'warehouse';
 }
 
 export interface UserProfile {
@@ -582,4 +599,124 @@ export interface ARAgingReport {
   items: ARAgingItem[];
   buckets: Record<ARAgingBucket, number>;
   totalDue: number;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// STOCK MANAGEMENT (Phase 1)
+// ════════════════════════════════════════════════════════════════════════════
+
+export type StockCategory = 'fabric' | 'zip' | 'box' | 'bag' | 'pillow_filling' | 'tape';
+
+// Fabric Catalog & Color Swatches (Phase 2)
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface FabricColor {
+  code: string;
+  name: string;
+  hex: string;
+  colorFamily?: 'blue' | 'gray' | 'green' | 'red' | 'purple' | 'yellow' | 'orange' | 'pink' | 'brown' | 'light';
+}
+
+export interface FabricCatalog {
+  id: string;
+  code: string;
+  name: string;
+  category: StockCategory;
+  colors: FabricColor[];
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const STOCK_CATEGORY_LABELS: Record<StockCategory, string> = {
+  fabric: 'ผ้า',
+  zip: 'ซิป',
+  box: 'กล่อง',
+  bag: 'ถุง',
+  pillow_filling: 'ใส้หมอน',
+  tape: 'เทป',
+};
+
+export type MovementType = 'in' | 'out' | 'transfer' | 'adjustment';
+
+export const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
+  in: 'รับเข้า',
+  out: 'ออก',
+  transfer: 'โอน',
+  adjustment: 'ปรับ',
+};
+
+export interface StockItem {
+  id: string;
+  sku: string;
+  name: string;
+  category: StockCategory;
+  unit: string;
+  costPerUnit: number;
+  sellingPrice?: number;
+  imageUrl?: string;
+  // Fabric catalog fields (optional for fabric category)
+  catalogCode?: string;
+  catalogName?: string;
+  colorCode?: string;
+  colorName?: string;
+  hexColor?: string;
+  specifications?: {
+    color?: string;
+    size?: string;
+    brand?: string;
+    width?: number;
+    [key: string]: unknown;
+  };
+  supplier?: {
+    name: string;
+    contact?: string;
+    phone?: string;
+  };
+  location?: string;
+  currentStock: number;
+  reorderPoint: number;
+  minLevel: number;
+  maxLevel: number;
+  safetyStock: number;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StockMovement {
+  id: string;
+  itemId: string;
+  itemSnapshot: {
+    name: string;
+    sku: string;
+    unit: string;
+  };
+  type: MovementType;
+  quantity: number;
+  costPerUnit: number;
+  totalCost: number;
+  movementDate: Date;
+  referenceType?: 'purchase' | 'order' | 'production' | 'manual' | 'return';
+  referenceId?: string;
+  referenceNumber?: string;
+  reason: string;
+  notes?: string;
+  fromLocation?: string;
+  toLocation?: string;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: Date;
+}
+
+export interface StockLocation {
+  id: string;
+  name: string;
+  type: 'warehouse' | 'shelf' | 'room';
+  parentLocationId?: string;
+  address?: string;
+  notes?: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: Date;
 }

@@ -40,8 +40,9 @@ const ROLE_BADGE: Record<UserRole, string> = {
   accountant: "bg-blue-100 text-blue-700",
   staff: "bg-green-100 text-green-700",
   viewer: "bg-gray-100 text-gray-700",
+  warehouse: "bg-orange-100 text-orange-700",
 };
-const ROLE_OPTIONS: UserRole[] = ["owner", "accountant", "staff", "viewer"];
+const ROLE_OPTIONS: UserRole[] = ["owner", "accountant", "staff", "viewer", "warehouse"];
 
 type Tab = "users" | "invites";
 

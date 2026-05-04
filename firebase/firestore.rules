@@ -20,6 +20,7 @@ service cloud.firestore {
     function isAccountant(){ return isActiveUser() && (role() == 'accountant' || role() == 'owner'); }
     function isStaff()     { return isActiveUser() && role() != 'viewer'; }
     function isViewer()    { return isActiveUser(); }
+    function isWarehouse() { return isActiveUser() && (role() == 'warehouse' || role() == 'owner' || role() == 'accountant'); }
 
     // ── Users ────────────────────────────────────────────────────────────
     match /users/{uid} {
@@ -132,6 +133,47 @@ service cloud.firestore {
       allow read: if isAccountant();
       allow create: if isActiveUser();
       allow update, delete: if false;
+    }
+
+    // ── Stock Items ───────────────────────────────────────────────────────
+    match /stockItems/{itemId} {
+      allow read: if isActiveUser();
+      allow create: if isWarehouse();
+      allow update: if isWarehouse();
+      allow delete: if isOwner();
+    }
+
+    // ── Stock Movements ───────────────────────────────────────────────────
+    match /stockMovements/{movementId} {
+      allow read: if isActiveUser();
+      allow create: if isWarehouse();
+      allow update, delete: if false; // Movements are immutable
+    }
+
+    // ── Stock Locations ──────────────────────────────────────────────────
+    match /stockLocations/{locationId} {
+      allow read: if isActiveUser();
+      allow create, update: if isWarehouse();
+      allow delete: if isOwner();
+    }
+
+    // ── Fabric Catalogs ───────────────────────────────────────────────────
+    match /fabricCatalogs/{catalogId} {
+      function isValidCatalogData(data) {
+        return data.code is string
+          && data.code.size() > 0
+          && data.name is string
+          && data.name.size() > 0
+          && data.category in ['fabric', 'zip', 'box', 'bag', 'pillow_filling', 'tape']
+          && data.colors is list
+          && data.colors.size() >= 0;
+      }
+
+      allow read: if isActiveUser();
+      allow update, delete: if isWarehouse() && isValidCatalogData(request.resource.data);
+      // Allow create for warehouse role or if createdBy matches current user
+      allow create: if (isWarehouse() || request.resource.data.createdBy == request.auth.uid)
+        && isValidCatalogData(request.resource.data);
     }
 
     // ── Default deny ─────────────────────────────────────────────────────

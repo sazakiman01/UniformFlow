@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, LogOut, Building2, FileText, Receipt, Wallet, BarChart3, Truck, FileMinus, ReceiptText, Wrench, Menu, X, BookOpen } from "lucide-react";
+import { Loader2, Users, LogOut, Building2, FileText, Receipt, Wallet, BarChart3, Truck, FileMinus, ReceiptText, Wrench, Menu, X, BookOpen, Package, ChevronDown, ChevronRight, Palette } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ROLE_LABELS, UserProfile } from "@/types";
 import { can, PermissionKey } from "@/lib/roles";
@@ -16,28 +16,59 @@ type NavLink = {
   requires?: PermissionKey;
 };
 type NavDivider = { type: "divider"; label: string };
-type NavEntry = NavLink | NavDivider;
+type NavSubmenu = {
+  type: "submenu";
+  label: string;
+  icon: typeof Users;
+  requires?: PermissionKey;
+  children: NavLink[];
+  defaultExpanded?: boolean;
+};
+type NavEntry = NavLink | NavDivider | NavSubmenu;
 
 const NAV_ITEMS: NavEntry[] = [
   { type: "divider", label: "หน้าหลัก" },
   { href: "/dashboard", label: "ภาพรวม", icon: BarChart3 },
-  { type: "divider", label: "จัดการ" },
-  { href: "/dashboard/customers", label: "ลูกค้า", icon: Users, requires: "manageFinance" },
-  { href: "/dashboard/users", label: "ผู้ใช้", icon: Users, requires: "manageUsers" },
-  { href: "/dashboard/company", label: "ข้อมูลบริษัท", icon: Building2, requires: "manageCompany" },
-  { type: "divider", label: "เอกสารการเงิน" },
-  { href: "/dashboard/quotations", label: "ใบเสนอราคา", icon: FileText, requires: "viewFinance" },
-  { href: "/dashboard/invoices", label: "ใบกำกับภาษี", icon: Receipt, requires: "viewFinance" },
-  { href: "/dashboard/receipts", label: "ใบเสร็จ", icon: ReceiptText, requires: "viewFinance" },
-  { href: "/dashboard/credit-notes", label: "ใบลดหนี้", icon: FileMinus, requires: "viewFinance" },
-  { href: "/dashboard/billing-notes", label: "ใบวางบิล", icon: FileText, requires: "viewFinance" },
-  { href: "/dashboard/expenses", label: "ค่าใช้จ่าย", icon: Wallet, requires: "viewFinance" },
+  { type: "divider", label: "คลังสินค้า" },
+  { href: "/dashboard/stock", label: "สต็อกวัตถุดิบ", icon: Package },
+  { href: "/dashboard/stock/catalogs", label: "จัดการแคตตาล็อกวัตถุดิบ", icon: Palette, requires: "manageOps" },
   { type: "divider", label: "เอกสารปฏิบัติการ" },
   { href: "/dashboard/delivery-notes", label: "ใบส่งของ", icon: Truck },
-  { type: "divider", label: "ระบบ" },
-  { href: "/dashboard/reports", label: "รายงาน", icon: BarChart3, requires: "viewFinance" },
-  { href: "/dashboard/tools", label: "เครื่องมือ", icon: Wrench, requires: "manageUsers" },
-  { href: "/dashboard/guide", label: "คู่มือ", icon: BookOpen },
+  {
+    type: "submenu",
+    label: "เอกสารการเงิน",
+    icon: Receipt,
+    requires: "viewFinance",
+    defaultExpanded: true,
+    children: [
+      { href: "/dashboard/quotations", label: "ใบเสนอราคา", icon: FileText, requires: "viewFinance" },
+      { href: "/dashboard/invoices", label: "ใบกำกับภาษี", icon: Receipt, requires: "viewFinance" },
+      { href: "/dashboard/receipts", label: "ใบเสร็จ", icon: ReceiptText, requires: "viewFinance" },
+      { href: "/dashboard/credit-notes", label: "ใบลดหนี้", icon: FileMinus, requires: "viewFinance" },
+      { href: "/dashboard/billing-notes", label: "ใบวางบิล", icon: FileText, requires: "viewFinance" },
+      { href: "/dashboard/expenses", label: "ค่าใช้จ่าย", icon: Wallet, requires: "viewFinance" },
+    ],
+  },
+  {
+    type: "submenu",
+    label: "จัดการ",
+    icon: Users,
+    children: [
+      { href: "/dashboard/customers", label: "ลูกค้า", icon: Users, requires: "manageFinance" },
+      { href: "/dashboard/users", label: "ผู้ใช้", icon: Users, requires: "manageUsers" },
+      { href: "/dashboard/company", label: "ข้อมูลบริษัท", icon: Building2, requires: "manageCompany" },
+    ],
+  },
+  {
+    type: "submenu",
+    label: "ระบบ",
+    icon: Wrench,
+    children: [
+      { href: "/dashboard/reports", label: "รายงาน", icon: BarChart3, requires: "viewFinance" },
+      { href: "/dashboard/tools", label: "เครื่องมือ", icon: Wrench, requires: "manageUsers" },
+      { href: "/dashboard/guide", label: "คู่มือ", icon: BookOpen },
+    ],
+  },
 ];
 
 const ROLE_BADGE: Record<UserProfile["role"], string> = {
@@ -45,6 +76,7 @@ const ROLE_BADGE: Record<UserProfile["role"], string> = {
   accountant: "bg-blue-100 text-blue-700",
   staff: "bg-green-100 text-green-700",
   viewer: "bg-gray-100 text-gray-700",
+  warehouse: "bg-orange-100 text-orange-700",
 };
 
 function filterNav(items: NavEntry[], profile: UserProfile | null): NavEntry[] {
@@ -54,6 +86,19 @@ function filterNav(items: NavEntry[], profile: UserProfile | null): NavEntry[] {
   for (const item of items) {
     if ("type" in item && item.type === "divider") {
       filtered.push(item);
+      continue;
+    }
+    if ("type" in item && item.type === "submenu") {
+      // Filter children and only keep submenu if it has visible children
+      const submenu = item as NavSubmenu;
+      if (!submenu.requires || can[submenu.requires](profile)) {
+        const visibleChildren = submenu.children.filter(
+          child => !child.requires || can[child.requires](profile)
+        );
+        if (visibleChildren.length > 0) {
+          filtered.push({ ...submenu, children: visibleChildren });
+        }
+      }
       continue;
     }
     const link = item as NavLink;
@@ -80,6 +125,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, loading, profile, profileLoading, isDisabled, signOut } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+
+  // Initialize expanded sections from defaultExpanded
+  useEffect(() => {
+    const defaults = new Set<string>();
+    NAV_ITEMS.forEach(item => {
+      if ("type" in item && item.type === "submenu" && item.defaultExpanded) {
+        defaults.add(item.label);
+      }
+    });
+    setExpandedSections(defaults);
+  }, []);
 
   useEffect(() => {
     if (loading || profileLoading) return;
@@ -120,6 +177,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const navItems = filterNav(NAV_ITEMS, profile);
+
+  const toggleSection = (label: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -174,6 +243,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           profile={profile}
           navItems={navItems}
           collapsed={!drawerOpen && sidebarCollapsed}
+          expandedSections={expandedSections}
+          onToggleSection={toggleSection}
         />
       </aside>
 
@@ -193,6 +264,8 @@ function SidebarContent({
   profile,
   navItems,
   collapsed,
+  expandedSections,
+  onToggleSection,
 }: {
   pathname: string;
   onClose: () => void;
@@ -201,6 +274,8 @@ function SidebarContent({
   profile: UserProfile;
   navItems: NavEntry[];
   collapsed: boolean;
+  expandedSections: Set<string>;
+  onToggleSection: (label: string) => void;
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -228,6 +303,60 @@ function SidebarContent({
                   {item.label}
                 </div>
               )
+            );
+          }
+          if ("type" in item && item.type === "submenu") {
+            const submenu = item as NavSubmenu;
+            const isExpanded = expandedSections.has(submenu.label);
+            const hasActiveChild = submenu.children.some(
+              child => pathname === child.href || pathname.startsWith(child.href + "/")
+            );
+
+            return (
+              <div key={`s-${i}`} className="mb-1">
+                <button
+                  onClick={() => onToggleSection(submenu.label)}
+                  className={
+                    "w-full flex items-center gap-2.5 px-3 py-2 my-0.5 rounded-lg text-sm transition-colors " +
+                    (hasActiveChild
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-700 hover:bg-gray-100") +
+                    (collapsed ? " justify-center" : "")
+                  }
+                  title={collapsed ? submenu.label : undefined}
+                >
+                  <submenu.icon className={"w-4 h-4 flex-shrink-0 " + (hasActiveChild ? "text-blue-600" : "text-gray-500")} />
+                  {!collapsed && (
+                    <>
+                      <span className="truncate flex-1 text-left">{submenu.label}</span>
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      )}
+                    </>
+                  )}
+                </button>
+                {!collapsed && isExpanded && (
+                  <div className="ml-4 mt-0.5 space-y-0.5">
+                    {submenu.children.map(child => {
+                      const { href, label, icon: ChildIcon } = child;
+                      const active = pathname === href || pathname.startsWith(href + "/");
+                      return (
+                        <Link
+                          key={href}
+                          href={href}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 hover:bg-gray-100"
+                          onClick={onClose}
+                        >
+                          <ChildIcon className={"w-4 h-4 flex-shrink-0 " + (active ? "text-blue-600" : "text-gray-400")} />
+                          <span className="truncate">{label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           }
           const { href, label, icon: Icon } = item as NavLink;
