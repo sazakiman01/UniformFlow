@@ -13,6 +13,13 @@
     "frameworksBackend": {
       "region": "asia-east1"
     },
+    "redirects": [
+      {
+        "source": "/app/home",
+        "destination": "/login",
+        "type": 301
+      }
+    ],
     "headers": [
       {
         "source": "**/*.@(html)",
