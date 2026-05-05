@@ -78,7 +78,7 @@ export default function BusinessModelCanvasDetailPage() {
         ...formData,
         revenueStreams: [
           ...(formData.revenueStreams || []),
-          { name: '', estimatedRevenue: undefined as any, period: 'month' as any },
+          { name: '', estimatedRevenue: 0, period: 'month' as 'month' | 'quarter' | 'year' },
         ],
       });
     } else if (field === 'costStructure') {
@@ -86,7 +86,7 @@ export default function BusinessModelCanvasDetailPage() {
         ...formData,
         costStructure: [
           ...(formData.costStructure || []),
-          { name: '', estimatedCost: undefined as any, period: 'month' as any },
+          { name: '', estimatedCost: 0, period: 'month' as 'month' | 'quarter' | 'year' },
         ],
       });
     } else if (
