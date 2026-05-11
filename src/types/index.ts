@@ -752,3 +752,88 @@ export interface StockLocation {
   createdBy: string;
   createdAt: Date;
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// HR MANAGEMENT (Recruitment Phase 1)
+// ════════════════════════════════════════════════════════════════════════════
+
+export type CandidateStatus = 'New' | 'Screening' | 'Interview' | 'Offer' | 'Hired' | 'Rejected';
+
+export const CANDIDATE_STATUS_LABELS: Record<CandidateStatus, string> = {
+  New: 'ใหม่',
+  Screening: 'คัดกรอง',
+  Interview: 'สัมภาษณ์',
+  Offer: 'เสนองาน',
+  Hired: 'รับเข้างาน',
+  Rejected: 'ไม่ผ่าน',
+};
+
+export const CANDIDATE_STATUS_COLORS: Record<CandidateStatus, string> = {
+  New: 'bg-blue-100 text-blue-800',
+  Screening: 'bg-yellow-100 text-yellow-800',
+  Interview: 'bg-purple-100 text-purple-800',
+  Offer: 'bg-green-100 text-green-800',
+  Hired: 'bg-emerald-100 text-emerald-800',
+  Rejected: 'bg-red-100 text-red-800',
+};
+
+export type Position = 'Graphic Design' | 'Accounting' | 'Sales' | 'Production' | 'Manager' | 'Admin' | 'Other';
+
+export const POSITION_LABELS: Record<Position, string> = {
+  'Graphic Design': 'กราฟิกดีไซน์',
+  'Accounting': 'บัญชี',
+  'Sales': 'ขาย',
+  'Production': 'ช่างตัดผ้า',
+  'Manager': 'ผู้จัดการ',
+  'Admin': 'ฝ่ายปกครอง',
+  'Other': 'อื่นๆ',
+};
+
+export interface PortfolioFile {
+  name: string;
+  url: string;
+  type: 'image' | 'pdf';
+  uploadedAt: Date;
+}
+
+export interface ExternalPortfolioLink {
+  platform: string; // "Behance", "Dribbble", etc.
+  url: string;
+}
+
+export interface Portfolio {
+  files: PortfolioFile[];
+  externalLinks: ExternalPortfolioLink[];
+}
+
+export interface InterviewRecord {
+  date: Date;
+  interviewer: string;
+  score: number; // 1-10
+  feedback: string;
+}
+
+export interface StatusHistoryEntry {
+  status: CandidateStatus;
+  changedAt: Date;
+  changedBy: string;
+}
+
+export interface Candidate {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  position: Position;
+  experienceYears: number;
+  expectedSalary: number;
+  appliedDate: Date;
+  status: CandidateStatus;
+  notes: string;
+  portfolio: Portfolio;
+  interviews: InterviewRecord[];
+  statusHistory: StatusHistoryEntry[];
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
